@@ -11,7 +11,7 @@ namespace N6_QLKHO
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            int test = 23469273;
         }
     }
 }
