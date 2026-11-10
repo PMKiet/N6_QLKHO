@@ -9,7 +9,7 @@ namespace N6_QLKHO
     {
         // Lấy chuỗi kết nối từ Web.config (hoặc chuỗi mặc định nếu chưa cấu hình Web.config)
         private static string connectionString = ConfigurationManager.ConnectionStrings["MyDbConnection"]?.ConnectionString
-            ?? "Data Source=.\\SQLEXPRESS;Initial Catalog=N6_QLKHOVATTU;Integrated Security=True;Encrypt=False";
+            ?? "Data Source=DESKTOP-UKT66TU;Initial Catalog=N6_QLKHOVATTU;Integrated Security=True;Encrypt=False";
 
         /// <summary>
         /// Thực thi câu lệnh SELECT và trả về DataTable (Dùng để nạp dữ liệu lên GridView, DropDownList...)
