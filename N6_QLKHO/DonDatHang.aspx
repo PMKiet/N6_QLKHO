@@ -13,6 +13,8 @@
         <button type="button" class="btn btn-primary" id="btnThemDon" data-bs-toggle="modal" data-bs-target="#modalDonDatHang">Thêm đơn đặt hàng</button>
     </div>
 
+    <asp:Label ID="lblLoi" runat="server" Visible="false" CssClass="alert alert-danger d-block" role="alert"></asp:Label>
+
     <!-- Bộ lọc tra cứu theo mã / ngày -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
@@ -38,14 +40,14 @@
                     </asp:DropDownList>
                 </div>
                 <div class="col-12 col-md-6 col-xl-3 d-flex gap-2">
-                    <asp:Button ID="btnTimKiem" runat="server" Text="Tìm kiếm" CssClass="btn btn-primary flex-fill flex-xl-grow-0" />
-                    <asp:Button ID="btnDatLai" runat="server" Text="Đặt lại" CssClass="btn btn-outline-secondary flex-fill flex-xl-grow-0" />
+                    <asp:Button ID="btnTimKiem" runat="server" Text="Tìm kiếm" OnClick="btnTimKiem_Click" CssClass="btn btn-primary flex-fill flex-xl-grow-0" />
+                    <asp:Button ID="btnDatLai" runat="server" Text="Đặt lại" OnClick="btnDatLai_Click" CssClass="btn btn-outline-secondary flex-fill flex-xl-grow-0" />
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Danh sách đơn đặt hàng (dữ liệu mẫu, sau này thay bằng GridView / Repeater) -->
+    <!-- Danh sách đơn đặt hàng (đổ từ SQL Server bằng Repeater) -->
     <div class="card border-0 shadow-sm">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -61,59 +63,33 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="fw-semibold">DH01</td>
-                        <td>01/10/2026 08:30</td>
-                        <td>Công ty Xây Dựng Bình An</td>
-                        <td class="d-none d-lg-table-cell">0939111222</td>
-                        <td class="text-end d-none d-md-table-cell">109.700.000 ₫</td>
-                        <td class="d-none d-sm-table-cell"><span class="badge bg-success">Đã xuất kho</span></td>
-                        <td class="text-end text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-chi-tiet" data-ma="DH01" data-bs-toggle="modal" data-bs-target="#modalChiTiet">Chi tiết</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary">Sửa</button>
-                            <button type="button" class="btn btn-sm btn-outline-danger">Xóa</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="fw-semibold">DH02</td>
-                        <td>15/10/2026 10:15</td>
-                        <td>Thầu xây dựng Hùng Cường</td>
-                        <td class="d-none d-lg-table-cell">0949333444</td>
-                        <td class="text-end d-none d-md-table-cell">3.750.000 ₫</td>
-                        <td class="d-none d-sm-table-cell"><span class="badge bg-success">Đã xuất kho</span></td>
-                        <td class="text-end text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-chi-tiet" data-ma="DH02" data-bs-toggle="modal" data-bs-target="#modalChiTiet">Chi tiết</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary">Sửa</button>
-                            <button type="button" class="btn btn-sm btn-outline-danger">Xóa</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="fw-semibold">DH03</td>
-                        <td>02/11/2026 14:20</td>
-                        <td>Doanh nghiệp tư nhân Thắng Lợi</td>
-                        <td class="d-none d-lg-table-cell">0959555666</td>
-                        <td class="text-end d-none d-md-table-cell">1.200.000 ₫</td>
-                        <td class="d-none d-sm-table-cell"><span class="badge bg-warning text-dark">Đang xử lý</span></td>
-                        <td class="text-end text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-chi-tiet" data-ma="DH03" data-bs-toggle="modal" data-bs-target="#modalChiTiet">Chi tiết</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary">Sửa</button>
-                            <button type="button" class="btn btn-sm btn-outline-danger">Xóa</button>
-                        </td>
-                    </tr>
+                    <asp:Repeater ID="rptDonHang" runat="server">
+                        <ItemTemplate>
+                            <tr>
+                                <td class="fw-semibold"><%#: Eval("MaDonHang") %></td>
+                                <td><%#: FormatNgay(Eval("NgayDatHang")) %></td>
+                                <td><%#: Eval("TenKhachHang") %></td>
+                                <td class="d-none d-lg-table-cell"><%#: Eval("SoDienThoai") %></td>
+                                <td class="text-end d-none d-md-table-cell"><%#: FormatTien(Eval("TongTien")) %></td>
+                                <td class="d-none d-sm-table-cell"><span class="badge <%# LopTrangThai(Eval("TrangThai")) %>"><%#: Eval("TrangThai") %></span></td>
+                                <td class="text-end text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-chi-tiet" data-ma="<%#: Eval("MaDonHang") %>" data-bs-toggle="modal" data-bs-target="#modalChiTiet">Chi tiết</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary">Sửa</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                </td>
+                            </tr>
+                        </ItemTemplate>
+                    </asp:Repeater>
                 </tbody>
             </table>
         </div>
 
-        <!-- Chân bảng: số lượng + phân trang -->
-        <div class="card-footer bg-white d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2">
-            <span class="small text-body-secondary">Hiển thị 1–3 trong 3 đơn</span>
-            <nav aria-label="Phân trang đơn đặt hàng">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Trước</a></li>
-                    <li class="page-item active" aria-current="page"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item disabled"><a class="page-link" href="#">Sau</a></li>
-                </ul>
-            </nav>
+        <asp:Panel ID="pnlTrong" runat="server" Visible="false" CssClass="text-center text-body-secondary py-5">
+            Không tìm thấy đơn đặt hàng nào.
+        </asp:Panel>
+
+        <div class="card-footer bg-white small text-body-secondary">
+            <asp:Label ID="lblSoLuong" runat="server"></asp:Label>
         </div>
     </div>
 
@@ -143,7 +119,6 @@
                             <thead class="table-light">
                                 <tr>
                                     <th scope="col">Mã hàng hóa</th>
-                                    <th scope="col">Tên hàng hóa</th>
                                     <th scope="col" class="text-end">Số lượng</th>
                                     <th scope="col" class="text-end">Đơn giá</th>
                                     <th scope="col" class="text-end">Thành tiền</th>
@@ -219,13 +194,13 @@
                             <tbody id="tbChiTiet">
                                 <tr>
                                     <td>
-                                        <select class="form-select form-select-sm" aria-label="Chọn hàng hóa">
+                                        <select class="form-select form-select-sm" aria-label="Mã hàng hóa">
                                             <option value="">Chọn hàng hóa</option>
-                                            <option>Tên hàng 1</option>
-                                            <option>Tên hàng 2</option>
-                                            <option>Tên hàng 3</option>
-                                            <option>Tên hàng 4</option>
-                                            <option>Tên hàng 5</option>
+                                            <option>HH01</option>
+                                            <option>HH02</option>
+                                            <option>HH03</option>
+                                            <option>HH04</option>
+                                            <option>HH05</option>
                                         </select>
                                     </td>
                                     <td><input type="number" min="1" class="form-control form-control-sm inp-so-luong" value="1" aria-label="Số lượng" /></td>
@@ -236,7 +211,7 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="4" class="text-end">Tổng cộng</th>
+                                    <th colspan="3" class="text-end">Tổng cộng</th>
                                     <th class="text-end" id="tdTongCong">0 ₫</th>
                                     <th></th>
                                 </tr>
@@ -307,32 +282,15 @@
                 tinhTien();
             }
 
-            /* ---------- Modal xem chi tiết đơn (dữ liệu mẫu) ---------- */
-            // Sau này thay bằng dữ liệu đọc từ bảng chi tiết đơn đặt hàng trong SQL Server.
-            var duLieuMau = {
-                DH01: {
-                    khach: 'Công ty Xây Dựng Bình An', sdt: '0939111222',
-                    ngay: '01/10/2026 08:30', trangThai: 'Đã xuất kho',
-                    dong: [['HH01', "Tên hàng 1", 100, 92000], ['HH02',  "Tên hàng 2", 5, 15800000], ['HH03',  "Tên hàng 3", 10, 2150000]]
-                },
-                DH02: {
-                    khach: 'Thầu xây dựng Hùng Cường', sdt: '0949333444',
-                    ngay: '15/10/2026 10:15', trangThai: 'Đã xuất kho',
-                    dong: [['HH04', "Tên hàng 3", 30, 125000]]
-                },
-                DH03: {
-                    khach: 'Doanh nghiệp tư nhân Thắng Lợi',  sdt: '0959555666',
-                    ngay: '02/11/2026 14:20', trangThai: 'Đang xử lý',
-                    dong: [['HH05',  "Tên hàng 3", 1000, 1200]]
-                }
-            };
+            /* ---------- Modal xem chi tiết đơn (dữ liệu từ SQL Server) ---------- */
+            var duLieu = <%= ChiTietJson %>;
 
             var modalChiTiet = document.getElementById('modalChiTiet');
             if (modalChiTiet) {
                 modalChiTiet.addEventListener('show.bs.modal', function (e) {
                     var nut = e.relatedTarget;
                     var ma = nut ? nut.getAttribute('data-ma') : null;
-                    var don = ma ? duLieuMau[ma] : null;
+                    var don = ma ? duLieu[ma] : null;
                     if (!don) return;
 
                     document.getElementById('ctMaDon').textContent = ma;
@@ -345,10 +303,10 @@
                     body.innerHTML = '';
                     var tong = 0;
                     don.dong.forEach(function (d) {
-                        var thanhTien = d[2] * d[3];
+                        var thanhTien = d[1] * d[2];
                         tong += thanhTien;
                         var tr = document.createElement('tr');
-                        [d[0],d[1], d[2].toLocaleString('vi-VN'), dinhDangTien(d[3]), dinhDangTien(thanhTien)].forEach(function (text, i) {
+                        [d[0], d[1].toLocaleString('vi-VN'), dinhDangTien(d[2]), dinhDangTien(thanhTien)].forEach(function (text, i) {
                             var td = document.createElement('td');
                             td.textContent = text;
                             if (i > 0) td.className = 'text-end';
@@ -361,6 +319,7 @@
             }
         })();
     </script>
+
 
 
 </asp:Content>
