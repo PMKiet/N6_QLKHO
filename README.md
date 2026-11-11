@@ -10,8 +10,8 @@ Hệ thống Quản lý Kho Vật tư giúp quản lý danh mục hàng hóa, nh
 | :--- | :--- | :--- |
 | **Lộc** | • Quản lý Hàng hóa<br>• Loại hàng hóa<br>• Cảnh báo | • Quản lý danh sách, thông tin hàng hóa<br>• Phân loại vật tư, hàng hóa<br>• Cảnh báo hàng tồn kho / sắp hết hạn |
 | **Phong** | • Quản lý Nhà cung cấp<br>• Quản lý Tài khoản & Phân quyền | • Quản lý thông tin các nhà cung cấp<br>• Quản lý người dùng, phân quyền hệ thống |
-| **Kiệt** | • Phiếu Nhập Kho<br>• Báo cáo & Thống kê<br>• Phiếu Xuất Kho<br> | • Quản lý quy trình và chi tiết phiếu nhập kho<br>• Lập báo cáo doanh thu, nhập/xuat kho và thống kê |
-| **Đô** | • Trang Đăng Nhập<br>• Đơn Đặt Hàng<br>• Tồn Kho | • Giao diện và xử lý đăng nhập hệ thống<br>• Quản lý phiếu xuất kho và chi tiết xuất<br>• Quản lý đơn đặt hàng của khách hàng<br>• Theo dõi và kiểm soát số lượng tồn kho |
+| **Kiệt** | • Phiếu Nhập Kho<br>• Báo cáo & Thống kê<br>• Phiếu Xuất Kho<br>• Đơn Đặt Hàng<br> | • Quản lý quy trình và chi tiết phiếu nhập kho<br>• Lập báo cáo doanh thu, nhập/xuat kho và thống kê |
+| **Đô** | • Trang Đăng Nhập<br>• Tồn Kho | • Giao diện và xử lý đăng nhập hệ thống<br>• Quản lý phiếu xuất kho và chi tiết xuất<br>• Quản lý đơn đặt hàng của khách hàng<br>• Theo dõi và kiểm soát số lượng tồn kho |
 
 ---
 
