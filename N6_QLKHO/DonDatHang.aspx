@@ -3,14 +3,13 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
 
-
     <!-- Tiêu đề trang -->
     <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-4">
         <div>
             <h1 class="h4 fw-bold mb-1">Đơn đặt hàng</h1>
             <p class="text-body-secondary small mb-0">Tra cứu, xem chi tiết, thêm mới và cập nhật đơn đặt hàng của khách hàng.</p>
         </div>
-        <button type="button" class="btn btn-primary" id="btnThemDon" data-bs-toggle="modal" data-bs-target="#modalDonDatHang">Thêm đơn đặt hàng</button>
+        <button type="button" class="btn btn-primary" id="btnThemDon" data-bs-toggle="modal" data-bs-target="#modalDonDatHang" onclick="moModalThem()">Thêm đơn đặt hàng</button>
     </div>
 
     <asp:Label ID="lblLoi" runat="server" Visible="false" CssClass="alert alert-danger d-block" role="alert"></asp:Label>
@@ -47,49 +46,71 @@
         </div>
     </div>
 
-    <!-- Danh sách đơn đặt hàng (đổ từ SQL Server bằng Repeater) -->
+    <!-- Danh sách đơn đặt hàng -->
     <div class="card border-0 shadow-sm">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Mã đơn</th>
-                        <th scope="col">Ngày đặt</th>
-                        <th scope="col">Khách hàng</th>
-                        <th scope="col" class="d-none d-lg-table-cell">Số điện thoại</th>
-                        <th scope="col" class="text-end d-none d-md-table-cell">Tổng tiền</th>
-                        <th scope="col" class="d-none d-sm-table-cell">Trạng thái</th>
-                        <th scope="col" class="text-end">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <asp:Repeater ID="rptDonHang" runat="server">
-                        <ItemTemplate>
+            <asp:ListView ID="lvDonHang" runat="server" OnItemCommand="lvDonHang_ItemCommand" DataKeyNames="MaDonHang">
+                <LayoutTemplate>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td class="fw-semibold"><%#: Eval("MaDonHang") %></td>
-                                <td><%#: FormatNgay(Eval("NgayDatHang")) %></td>
-                                <td><%#: Eval("TenKhachHang") %></td>
-                                <td class="d-none d-lg-table-cell"><%#: Eval("SoDienThoai") %></td>
-                                <td class="text-end d-none d-md-table-cell"><%#: FormatTien(Eval("TongTien")) %></td>
-                                <td class="d-none d-sm-table-cell"><span class="badge <%# LopTrangThai(Eval("TrangThai")) %>"><%#: Eval("TrangThai") %></span></td>
-                                <td class="text-end text-nowrap">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-chi-tiet" data-ma="<%#: Eval("MaDonHang") %>" data-bs-toggle="modal" data-bs-target="#modalChiTiet">Chi tiết</button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary">Sửa</button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger">Xóa</button>
-                                </td>
+                                <th scope="col">Mã đơn</th>
+                                <th scope="col">Ngày đặt</th>
+                                <th scope="col">Khách hàng</th>
+                                <th scope="col" class="d-none d-lg-table-cell">Số điện thoại</th>
+                                <th scope="col" class="text-end d-none d-md-table-cell">Tổng tiền</th>
+                                <th scope="col" class="d-none d-sm-table-cell">Trạng thái</th>
+                                <th scope="col" class="text-end">Thao tác</th>
                             </tr>
-                        </ItemTemplate>
-                    </asp:Repeater>
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                            <tr id="itemPlaceholder" runat="server"></tr>
+                        </tbody>
+                    </table>
+                </LayoutTemplate>
+                <ItemTemplate>
+                    <tr>
+                        <td class="fw-semibold"><%#: Eval("MaDonHang") %></td>
+                        <td><%#: FormatNgay(Eval("NgayDatHang")) %></td>
+                        <td><%#: Eval("TenKhachHang") %></td>
+                        <td class="d-none d-lg-table-cell"><%#: Eval("SoDienThoai") %></td>
+                        <td class="text-end d-none d-md-table-cell"><%#: FormatTien(Eval("TongTien")) %></td>
+                        <td class="d-none d-sm-table-cell"><span class="badge <%# LopTrangThai(Eval("TrangThai")) %>"><%#: Eval("TrangThai") %></span></td>
+                        <td class="text-end text-nowrap">
+                            <!-- Nút xem chi tiết (gắn thêm data-ma để JS nhận diện) -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                    data-bs-toggle="modal" data-bs-target="#modalChiTiet" 
+                                    data-ma="<%# Eval("MaDonHang") %>">
+                                Chi tiết
+                            </button>
+                            
+                            <!-- Nút sửa (gắn thêm data-ma và gọi hàm JS mở modal sửa) -->
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    data-bs-toggle="modal" data-bs-target="#modalDonDatHang" 
+                                    data-ma="<%# Eval("MaDonHang") %>"
+                                    onclick="moModalSua(this)">
+                                Sửa
+                            </button>
+
+                            <asp:Button ID="btnXoa" runat="server" CommandName="XoaDon" CommandArgument='<%# Eval("MaDonHang") %>' Text="Xóa" CssClass="btn btn-sm btn-outline-danger" OnClientClick="return confirm('Bạn có chắc chắn muốn xóa đơn hàng này?');" />
+                        </td>
+                    </tr>
+                </ItemTemplate>
+                <EmptyDataTemplate>
+                    <div class="text-center text-body-secondary py-5">
+                        Không tìm thấy đơn đặt hàng nào.
+                    </div>
+                </EmptyDataTemplate>
+            </asp:ListView>
         </div>
 
-        <asp:Panel ID="pnlTrong" runat="server" Visible="false" CssClass="text-center text-body-secondary py-5">
-            Không tìm thấy đơn đặt hàng nào.
-        </asp:Panel>
-
-        <div class="card-footer bg-white small text-body-secondary">
+        <div class="card-footer bg-white small text-body-secondary d-flex justify-content-between align-items-center">
             <asp:Label ID="lblSoLuong" runat="server"></asp:Label>
+            <asp:DataPager ID="dpDonHang" runat="server" PagedControlID="lvDonHang" PageSize="10">
+                <Fields>
+                    <asp:NumericPagerField ButtonCount="5" NumericButtonCssClass="btn btn-sm btn-outline-secondary mx-1" CurrentPageLabelCssClass="btn btn-sm btn-secondary mx-1 disabled" />
+                </Fields>
+            </asp:DataPager>
         </div>
     </div>
 
@@ -119,6 +140,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th scope="col">Mã hàng hóa</th>
+                                    <th scope="col">Tên hàng hóa</th>
                                     <th scope="col" class="text-end">Số lượng</th>
                                     <th scope="col" class="text-end">Đơn giá</th>
                                     <th scope="col" class="text-end">Thành tiền</th>
@@ -127,7 +149,7 @@
                             <tbody id="tbXemChiTiet"></tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="3" class="text-end">Tổng cộng</th>
+                                    <th colspan="4" class="text-end">Tổng cộng</th>
                                     <th class="text-end" id="ctTongCong">0 ₫</th>
                                 </tr>
                             </tfoot>
@@ -141,7 +163,7 @@
         </div>
     </div>
 
-    <!-- Modal thêm đơn đặt hàng (chỉ giao diện, chưa lưu dữ liệu) -->
+    <!-- Modal thêm / sửa đơn đặt hàng -->
     <div class="modal fade" id="modalDonDatHang" tabindex="-1" aria-labelledby="modalDonDatHangLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
@@ -150,29 +172,31 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- Hidden field để phân biệt chế độ Thêm hay Sửa ở codebehind -->
+                    <asp:HiddenField ID="hdCheDo" runat="server" Value="Them" />
                     <div class="row g-3 mb-4">
                         <div class="col-12 col-md-4">
                             <label for="mdMaDon" class="form-label small fw-semibold">Mã đơn</label>
-                            <input type="text" id="mdMaDon" class="form-control" value="DH04" readonly />
+                            <asp:TextBox ID="mdMaDon" runat="server" CssClass="form-control" placeholder="DH04" />
                         </div>
                         <div class="col-12 col-md-4">
                             <label for="mdNgayDat" class="form-label small fw-semibold">Ngày đặt</label>
-                            <input type="datetime-local" id="mdNgayDat" class="form-control" />
+                            <asp:TextBox ID="mdNgayDat" runat="server" CssClass="form-control" TextMode="DateTimeLocal" />
                         </div>
                         <div class="col-12 col-md-4">
                             <label for="mdTrangThai" class="form-label small fw-semibold">Trạng thái</label>
-                            <select id="mdTrangThai" class="form-select">
-                                <option>Đang xử lý</option>
-                                <option>Đã xuất kho</option>
-                            </select>
+                            <asp:DropDownList ID="mdTrangThai" runat="server" CssClass="form-select">
+                                <asp:ListItem Text="Đang xử lý" Value="Đang xử lý"></asp:ListItem>
+                                <asp:ListItem Text="Đã xuất kho" Value="Đã xuất kho"></asp:ListItem>
+                            </asp:DropDownList>
                         </div>
                         <div class="col-12 col-md-8">
                             <label for="mdTenKhach" class="form-label small fw-semibold">Tên khách hàng</label>
-                            <input type="text" id="mdTenKhach" class="form-control" />
+                            <asp:TextBox ID="mdTenKhach" runat="server" CssClass="form-control" />
                         </div>
                         <div class="col-12 col-md-4">
                             <label for="mdSdt" class="form-label small fw-semibold">Số điện thoại</label>
-                            <input type="tel" id="mdSdt" class="form-control" />
+                            <asp:TextBox ID="mdSdt" runat="server" CssClass="form-control" TextMode="Phone" />
                         </div>
                     </div>
 
@@ -194,17 +218,11 @@
                             <tbody id="tbChiTiet">
                                 <tr>
                                     <td>
-                                        <select class="form-select form-select-sm" aria-label="Mã hàng hóa">
-                                            <option value="">Chọn hàng hóa</option>
-                                            <option>HH01</option>
-                                            <option>HH02</option>
-                                            <option>HH03</option>
-                                            <option>HH04</option>
-                                            <option>HH05</option>
-                                        </select>
+                                        <asp:DropDownList ID="ddlHangHoa" runat="server" CssClass="form-select form-select-sm ddl-hang-hoa">
+                                        </asp:DropDownList>
                                     </td>
                                     <td><input type="number" min="1" class="form-control form-control-sm inp-so-luong" value="1" aria-label="Số lượng" /></td>
-                                    <td><input type="number" min="0" class="form-control form-control-sm inp-don-gia" value="0" aria-label="Đơn giá" /></td>
+                                    <td><input type="number" min="0" step="any" class="form-control form-control-sm inp-don-gia" value="0" aria-label="Đơn giá" /></td>
                                     <td class="text-end thanh-tien">0 ₫</td>
                                     <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger btn-xoa-dong">Xóa</button></td>
                                 </tr>
@@ -221,105 +239,164 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary">Lưu đơn</button>
+                    <asp:Button ID="btnLuuDon" runat="server" Text="Lưu đơn" OnClick="btnLuuDon_Click" CssClass="btn btn-primary" />
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- JavaScript xử lý Modal -->
     <script>
-        (function () {
-            function dinhDangTien(so) {
-                return so.toLocaleString('vi-VN') + ' ₫';
-            }
+        var duLieu = <%= ChiTietJson %>;
 
-            /* ---------- Modal thêm đơn: thêm/xóa dòng, tính tiền ---------- */
-            var tbody = document.getElementById('tbChiTiet');
-            var tongCong = document.getElementById('tdTongCong');
-            var btnThemDong = document.getElementById('btnThemDong');
+        function dinhDangTien(so) {
+            return so.toLocaleString('vi-VN') + ' ₫';
+        }
 
-            if (tbody && tongCong && btnThemDong) {
-                var dongMau = tbody.rows[0].cloneNode(true);
+        /* --- Xử lý tính tiền trong modal Thêm/Sửa --- */
+        var tbody = document.getElementById('tbChiTiet');
+        var tongCong = document.getElementById('tdTongCong');
+        var btnThemDong = document.getElementById('btnThemDong');
+        var dongMau = tbody ? tbody.rows[0].cloneNode(true) : null;
 
-                function tinhTien() {
-                    var tong = 0;
-                    Array.prototype.forEach.call(tbody.rows, function (tr) {
-                        var sl = parseFloat(tr.querySelector('.inp-so-luong').value) || 0;
-                        var gia = parseFloat(tr.querySelector('.inp-don-gia').value) || 0;
-                        var thanhTien = sl * gia;
-                        tr.querySelector('.thanh-tien').textContent = dinhDangTien(thanhTien);
-                        tong += thanhTien;
-                    });
-                    tongCong.textContent = dinhDangTien(tong);
-                }
+        function tinhTien() {
+            if (!tbody || !tongCong) return;
+            var tong = 0;
+            Array.prototype.forEach.call(tbody.rows, function (tr) {
+                var sl = parseFloat(tr.querySelector('.inp-so-luong').value) || 0;
+                var gia = parseFloat(tr.querySelector('.inp-don-gia').value) || 0;
+                var thanhTien = sl * gia;
+                tr.querySelector('.thanh-tien').textContent = dinhDangTien(thanhTien);
+                tong += thanhTien;
+            });
+            tongCong.textContent = dinhDangTien(tong);
+        }
 
-                function datLaiDong(tr) {
+        if (btnThemDong && tbody) {
+            btnThemDong.addEventListener('click', function () {
+                var tr = dongMau.cloneNode(true);
+                tr.querySelector('select').selectedIndex = 0;
+                tr.querySelector('.inp-so-luong').value = 1;
+                tr.querySelector('.inp-don-gia').value = 0;
+                tbody.appendChild(tr);
+                tinhTien();
+            });
+
+            tbody.addEventListener('click', function (e) {
+                var nut = e.target.closest('.btn-xoa-dong');
+                if (!nut) return;
+                var tr = nut.closest('tr');
+                if (tbody.rows.length > 1) {
+                    tr.remove();
+                } else {
                     tr.querySelector('select').selectedIndex = 0;
                     tr.querySelector('.inp-so-luong').value = 1;
                     tr.querySelector('.inp-don-gia').value = 0;
                 }
+                tinhTien();
+            });
 
-                btnThemDong.addEventListener('click', function () {
-                    var tr = dongMau.cloneNode(true);
-                    datLaiDong(tr);
-                    tbody.appendChild(tr);
-                    tinhTien();
-                });
+            tbody.addEventListener('input', tinhTien);
+        }
 
-                tbody.addEventListener('click', function (e) {
-                    var nut = e.target.closest('.btn-xoa-dong');
-                    if (!nut) return;
-                    var tr = nut.closest('tr');
-                    if (tbody.rows.length > 1) {
-                        tr.remove();
-                    } else {
-                        datLaiDong(tr); // giữ lại ít nhất một dòng
-                    }
-                    tinhTien();
-                });
-
-                tbody.addEventListener('input', tinhTien);
+        /* --- Mở Modal Thêm mới --- */
+        function moModalThem() {
+            document.getElementById('modalDonDatHangLabel').textContent = 'Thêm đơn đặt hàng';
+            document.getElementById('<%= hdCheDo.ClientID %>').value = 'Them';
+            document.getElementById('<%= mdMaDon.ClientID %>').value = '';
+            document.getElementById('<%= mdMaDon.ClientID %>').readOnly = false;
+            document.getElementById('<%= mdNgayDat.ClientID %>').value = '';
+            document.getElementById('<%= mdTenKhach.ClientID %>').value = '';
+            document.getElementById('<%= mdSdt.ClientID %>').value = '';
+            
+            // Reset bảng chi tiết về 1 dòng mặc định
+            if (tbody && dongMau) {
+                tbody.innerHTML = '';
+                tbody.appendChild(dongMau.cloneNode(true));
                 tinhTien();
             }
+        }
 
-            /* ---------- Modal xem chi tiết đơn (dữ liệu từ SQL Server) ---------- */
-            var duLieu = <%= ChiTietJson %>;
+        /* --- Mở Modal Sửa (Đổ dữ liệu cũ lên form) --- */
+        function moModalSua(btn) {
+            var ma = btn.getAttribute('data-ma');
+            var don = duLieu[ma];
+            if (!don) return;
 
-            var modalChiTiet = document.getElementById('modalChiTiet');
-            if (modalChiTiet) {
-                modalChiTiet.addEventListener('show.bs.modal', function (e) {
-                    var nut = e.relatedTarget;
-                    var ma = nut ? nut.getAttribute('data-ma') : null;
-                    var don = ma ? duLieu[ma] : null;
-                    if (!don) return;
+            document.getElementById('modalDonDatHangLabel').textContent = 'Sửa đơn đặt hàng: ' + ma;
+            document.getElementById('<%= hdCheDo.ClientID %>').value = 'Sua';
+            
+            var txtMa = document.getElementById('<%= mdMaDon.ClientID %>');
+            txtMa.value = ma;
+            txtMa.readOnly = true; // Khóa mã đơn không cho sửa khóa chính
 
-                    document.getElementById('ctMaDon').textContent = ma;
-                    document.getElementById('ctKhachHang').textContent = don.khach;
-                    document.getElementById('ctSdt').textContent = don.sdt;
-                    document.getElementById('ctNgayDat').textContent = don.ngay;
-                    document.getElementById('ctTrangThai').textContent = don.trangThai;
-
-                    var body = document.getElementById('tbXemChiTiet');
-                    body.innerHTML = '';
-                    var tong = 0;
-                    don.dong.forEach(function (d) {
-                        var thanhTien = d[1] * d[2];
-                        tong += thanhTien;
-                        var tr = document.createElement('tr');
-                        [d[0], d[1].toLocaleString('vi-VN'), dinhDangTien(d[2]), dinhDangTien(thanhTien)].forEach(function (text, i) {
-                            var td = document.createElement('td');
-                            td.textContent = text;
-                            if (i > 0) td.className = 'text-end';
-                            tr.appendChild(td);
-                        });
-                        body.appendChild(tr);
-                    });
-                    document.getElementById('ctTongCong').textContent = dinhDangTien(tong);
-                });
+            // Format ngày dạng yyyy-MM-ddTHH:mm cho input datetime-local
+            if (don.ngayRaw) {
+                document.getElementById('<%= mdNgayDat.ClientID %>').value = don.ngayRaw;
             }
-        })();
+            document.getElementById('<%= mdTenKhach.ClientID %>').value = don.khach;
+            document.getElementById('<%= mdSdt.ClientID %>').value = don.sdt;
+            
+            var ddlTrangThai = document.getElementById('<%= mdTrangThai.ClientID %>');
+            for (var i = 0; i < ddlTrangThai.options.length; i++) {
+                if (ddlTrangThai.options[i].value === don.trangThai) {
+                    ddlTrangThai.selectedIndex = i;
+                    break;
+                }
+            }
+
+            // Đổ danh sách sản phẩm vào bảng chi tiết
+            if (tbody && dongMau) {
+                tbody.innerHTML = '';
+                don.dong.forEach(function (d) {
+                    var tr = dongMau.cloneNode(true);
+                    var select = tr.querySelector('select');
+                    for (var j = 0; j < select.options.length; j++) {
+                        if (select.options[j].value === d.MaHang) {
+                            select.selectedIndex = j;
+                            break;
+                        }
+                    }
+                    tr.querySelector('.inp-so-luong').value = d.SoLuong;
+                    tr.querySelector('.inp-don-gia').value = d.DonGia;
+                    tbody.appendChild(tr);
+                });
+                tinhTien();
+            }
+        }
+
+        /* --- Xổ dữ liệu vào Modal Chi Tiết --- */
+        var modalChiTiet = document.getElementById('modalChiTiet');
+        if (modalChiTiet) {
+            modalChiTiet.addEventListener('show.bs.modal', function (e) {
+                var nut = e.relatedTarget;
+                var ma = nut ? nut.getAttribute('data-ma') : null;
+                var don = ma ? duLieu[ma] : null;
+                if (!don) return;
+
+                document.getElementById('ctMaDon').textContent = ma;
+                document.getElementById('ctKhachHang').textContent = don.khach;
+                document.getElementById('ctSdt').textContent = don.sdt;
+                document.getElementById('ctNgayDat').textContent = don.ngay;
+                document.getElementById('ctTrangThai').textContent = don.trangThai;
+
+                var body = document.getElementById('tbXemChiTiet');
+                body.innerHTML = '';
+                var tong = 0;
+                don.dong.forEach(function (d) {
+                    var thanhTien = d.SoLuong * d.DonGia;
+                    tong += thanhTien;
+                    var tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + d.MaHang + '</td>' +
+                        '<td>' + d.TenHang + '</td>' +
+                        '<td class="text-end">' + d.SoLuong.toLocaleString('vi-VN') + '</td>' +
+                        '<td class="text-end">' + dinhDangTien(d.DonGia) + '</td>' +
+                        '<td class="text-end">' + dinhDangTien(thanhTien) + '</td>';
+                    body.appendChild(tr);
+                });
+                document.getElementById('ctTongCong').textContent = dinhDangTien(tong);
+            });
+        }
     </script>
-
-
 
 </asp:Content>
