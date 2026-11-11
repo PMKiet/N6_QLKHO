@@ -215,14 +215,19 @@
                                     <th scope="col"><span class="visually-hidden">Xóa dòng</span></th>
                                 </tr>
                             </thead>
-                            <tbody id="tbChiTiet">
+                           <tbody id="tbChiTiet">
                                 <tr>
                                     <td>
-                                        <asp:DropDownList ID="ddlHangHoa" runat="server" CssClass="form-select form-select-sm ddl-hang-hoa">
-                                        </asp:DropDownList>
+                                       <asp:DropDownList ID="ddlHangHoa" runat="server"
+    CssClass="form-select form-select-sm ddl-hang-hoa">
+</asp:DropDownList>
                                     </td>
-                                    <td><input type="number" min="1" class="form-control form-control-sm inp-so-luong" value="1" aria-label="Số lượng" /></td>
-                                    <td><input type="number" min="0" step="any" class="form-control form-control-sm inp-don-gia" value="0" aria-label="Đơn giá" /></td>
+                                    <td><input type="number" name="SoLuong" min="1"
+       class="form-control form-control-sm inp-so-luong"
+       value="1" aria-label="Số lượng" /></td>
+                                    <td><input type="number" name="DonGia" min="0" step="any"
+       class="form-control form-control-sm inp-don-gia"
+       value="0" aria-label="Đơn giá" /></td>
                                     <td class="text-end thanh-tien">0 ₫</td>
                                     <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger btn-xoa-dong">Xóa</button></td>
                                 </tr>
@@ -248,7 +253,8 @@
     <!-- JavaScript xử lý Modal -->
     <script>
         var duLieu = <%= ChiTietJson %>;
-
+        var giaHang = <%= GiaHangJson %>;
+        
         function dinhDangTien(so) {
             return so.toLocaleString('vi-VN') + ' ₫';
         }
@@ -273,6 +279,25 @@
         }
 
         if (btnThemDong && tbody) {
+
+            // Khi chọn hàng hóa -> tự điền đơn giá tương ứng 
+            tbody.addEventListener('change', function (e) {
+                var select = e.target.closest('.ddl-hang-hoa');
+
+                if (!select) return;
+
+                var tr = select.closest('tr');
+                var maHang = select.value;
+
+                if (maHang && giaHang[maHang] !== undefined) {
+                    tr.querySelector('.inp-don-gia').value = giaHang[maHang];
+                } else {
+                    tr.querySelector('.inp-don-gia').value = 0;
+                }
+
+                tinhTien();
+            });
+
             btnThemDong.addEventListener('click', function () {
                 var tr = dongMau.cloneNode(true);
                 tr.querySelector('select').selectedIndex = 0;
