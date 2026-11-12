@@ -50,7 +50,7 @@
     <!-- Danh sách đơn đặt hàng -->
     <div class="card border-0 shadow-sm">
         <div class="table-responsive">
-            <asp:ListView ID="lvDonHang" runat="server" OnItemCommand="lvDonHang_ItemCommand" DataKeyNames="MaDonHang">
+            <asp:ListView ID="lvDonHang" runat="server" OnItemCommand="lvDonHang_ItemCommand" OnPagePropertiesChanging="lvDonHang_PagePropertiesChanging" DataKeyNames="MaDonHang">
                 <LayoutTemplate>
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">

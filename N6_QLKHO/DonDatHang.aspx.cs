@@ -95,6 +95,8 @@ namespace N6_QLKHO
 
         protected void btnTimKiem_Click(object sender, EventArgs e)
         {
+            //tro ve trang dau khi tim kiem
+            dpDonHang.SetPageProperties(0, dpDonHang.PageSize, false);
             LoadDanhSachDonHang();
         }
 
@@ -104,6 +106,7 @@ namespace N6_QLKHO
             txtTuNgay.Text = string.Empty;
             txtDenNgay.Text = string.Empty;
             ddlTrangThai.SelectedIndex = 0;
+            dpDonHang.SetPageProperties(0, dpDonHang.PageSize, false);
             LoadDanhSachDonHang();
         }
 
@@ -510,5 +513,15 @@ namespace N6_QLKHO
             string js = "window.addEventListener('load',function(){khoiPhucForm('" + cheDo + "'," + json + ");});";
             ClientScript.RegisterStartupScript(this.GetType(), "KhoiPhucForm", js, true);
         }
+
+
+        //xu ly phan trang
+        protected void lvDonHang_PagePropertiesChanging(object sender, PagePropertiesChangingEventArgs e)
+        {
+            dpDonHang.SetPageProperties(e.StartRowIndex, e.MaximumRows, false);
+            LoadDanhSachDonHang();
+        }
     }
 }
+
+  
