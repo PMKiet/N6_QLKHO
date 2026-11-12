@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.Web.Script.Serialization;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -17,6 +18,14 @@ namespace N6_QLKHO
 
         protected string ChiTietJson { get; set; } = "{}";
         protected string GiaHangJson { get; set; } = "{}";
+
+        private class DongHang
+        {
+            public string MaHang;
+            public int SoLuong;
+            public decimal DonGia;
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             TaiGiaHangHoa(); // luôn chạy để JS có bảng giá sau mỗi lần postback
@@ -28,7 +37,39 @@ namespace N6_QLKHO
             }
         }
 
+        // =====================================================================
+        //  THÔNG BÁO (dùng chung cho thêm / sửa / xóa / lỗi)
+        //  - Server gọi ThongBao(...) -> sinh script gọi hienThongBao() bên JS
+        //  - JS hiển thị toast, tự ẩn sau 4 giây, có nút X để tắt thủ công
+        // =====================================================================
+        private static string DuaVaoJs(string json)
+        {
+            // tránh chuỗi "</script>" trong dữ liệu làm vỡ thẻ script
+            return json.Replace("<", "\\u003c").Replace(">", "\\u003e");
+        }
 
+        private void ThongBao(string noiDung, bool thanhCong)
+        {
+            string json = DuaVaoJs(new JavaScriptSerializer().Serialize(noiDung));
+            string js = "window.addEventListener('load',function(){hienThongBao(" + json + "," + (thanhCong ? "true" : "false") + ");});";
+
+            // key khác nhau mỗi lần để nhiều thông báo không đè nhau
+            ClientScript.RegisterStartupScript(this.GetType(), "TB_" + Guid.NewGuid().ToString("N"), js, true);
+        }
+
+        // Đổi lỗi SQL kỹ thuật thành câu dễ hiểu
+        private static string LoiThanThien(Exception ex)
+        {
+            SqlException sqlEx = ex as SqlException;
+            if (sqlEx != null)
+            {
+                if (sqlEx.Number == 547)
+                    return "Không thể thực hiện vì đơn hàng đang được dùng ở dữ liệu khác (ví dụ phiếu xuất kho).";
+                if (sqlEx.Number == 2627 || sqlEx.Number == 2601)
+                    return "Dữ liệu bị trùng (mã đơn hoặc hàng hóa đã tồn tại).";
+            }
+            return ex.Message;
+        }
 
         private void TaiGiaHangHoa()
         {
@@ -45,13 +86,14 @@ namespace N6_QLKHO
                             dict[rd["MaHangHoa"].ToString()] = Convert.ToDecimal(rd["DonGia"]);
                     }
                 }
-                GiaHangJson = new JavaScriptSerializer().Serialize(dict);
+                GiaHangJson = DuaVaoJs(new JavaScriptSerializer().Serialize(dict));
             }
             catch
             {
                 GiaHangJson = "{}";
             }
         }
+
         protected void btnTimKiem_Click(object sender, EventArgs e)
         {
             LoadDanhSachDonHang();
@@ -60,6 +102,8 @@ namespace N6_QLKHO
         protected void btnDatLai_Click(object sender, EventArgs e)
         {
             txtMaDon.Text = string.Empty;
+            txtTuNgay.Text = string.Empty;
+            txtDenNgay.Text = string.Empty;
             ddlTrangThai.SelectedIndex = 0;
             LoadDanhSachDonHang();
         }
@@ -70,33 +114,26 @@ namespace N6_QLKHO
             try
             {
                 using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
+                using (SqlCommand cmd = new SqlCommand("SELECT MaHangHoa, TenHangHoa FROM HangHoa", conn))
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
-                    string query = "SELECT MaHangHoa, TenHangHoa FROM HangHoa";
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            DataTable dt = new DataTable();
-                            da.Fill(dt);
-                            ddlHangHoa.DataSource = dt;
-                            ddlHangHoa.DataTextField = "TenHangHoa";
-                            ddlHangHoa.DataValueField = "MaHangHoa";
-                            ddlHangHoa.DataBind();
-                            ddlHangHoa.Items.Insert(0, new ListItem("Chọn hàng hóa", ""));
-                        }
-                    }
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    ddlHangHoa.DataSource = dt;
+                    ddlHangHoa.DataTextField = "TenHangHoa";
+                    ddlHangHoa.DataValueField = "MaHangHoa";
+                    ddlHangHoa.DataBind();
+                    ddlHangHoa.Items.Insert(0, new ListItem("Chọn hàng hóa", ""));
                 }
             }
             catch (Exception ex)
             {
-                lblLoi.Text = "Lỗi tải danh mục hàng hóa: " + ex.Message;
-                lblLoi.Visible = true;
+                ThongBao("Lỗi tải danh mục hàng hóa: " + LoiThanThien(ex), false);
             }
         }
 
         private void LoadDanhSachDonHang()
         {
-            lblLoi.Visible = false;
             try
             {
                 using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
@@ -107,6 +144,8 @@ namespace N6_QLKHO
                               LEFT JOIN ChiTietDonDatHang c ON d.MaDonHang = c.MaDonHang
                               WHERE (@TuKhoa = '' OR d.MaDonHang LIKE '%' + @TuKhoa + '%' OR d.TenKhachHang LIKE '%' + @TuKhoa + '%')
                                 AND (@TrangThai = '' OR d.TrangThai = @TrangThai)
+                                AND (@TuNgay IS NULL OR d.NgayDatHang >= @TuNgay)
+                                AND (@DenNgay IS NULL OR d.NgayDatHang < DATEADD(DAY, 1, @DenNgay))
                               GROUP BY d.MaDonHang, d.NgayDatHang, d.TenKhachHang, d.SoDienThoai, d.TrangThai
                               ORDER BY d.NgayDatHang DESC";
 
@@ -114,10 +153,16 @@ namespace N6_QLKHO
                                          FROM ChiTietDonDatHang c
                                          INNER JOIN HangHoa h ON c.MaHangHoa = h.MaHangHoa";
 
+                    DateTime tuNgay, denNgay;
+                    bool coTu = DateTime.TryParse(txtTuNgay.Text, out tuNgay);
+                    bool coDen = DateTime.TryParse(txtDenNgay.Text, out denNgay);
+
                     using (SqlCommand cmdDon = new SqlCommand(sqlDon, conn))
                     {
                         cmdDon.Parameters.AddWithValue("@TuKhoa", txtMaDon.Text.Trim());
                         cmdDon.Parameters.AddWithValue("@TrangThai", ddlTrangThai.SelectedValue);
+                        cmdDon.Parameters.AddWithValue("@TuNgay", coTu ? (object)tuNgay.Date : DBNull.Value);
+                        cmdDon.Parameters.AddWithValue("@DenNgay", coDen ? (object)denNgay.Date : DBNull.Value);
 
                         using (SqlDataAdapter daDon = new SqlDataAdapter(cmdDon))
                         {
@@ -130,13 +175,11 @@ namespace N6_QLKHO
                             lblSoLuong.Text = "Tổng số lượng: " + dtDon.Rows.Count + " đơn đặt hàng";
 
                             using (SqlCommand cmdChiTiet = new SqlCommand(sqlChiTiet, conn))
+                            using (SqlDataAdapter daChiTiet = new SqlDataAdapter(cmdChiTiet))
                             {
-                                using (SqlDataAdapter daChiTiet = new SqlDataAdapter(cmdChiTiet))
-                                {
-                                    DataTable dtChiTiet = new DataTable();
-                                    daChiTiet.Fill(dtChiTiet);
-                                    ChiTietJson = TaoChuoiJson(dtDon, dtChiTiet);
-                                }
+                                DataTable dtChiTiet = new DataTable();
+                                daChiTiet.Fill(dtChiTiet);
+                                ChiTietJson = TaoChuoiJson(dtDon, dtChiTiet);
                             }
                         }
                     }
@@ -144,8 +187,7 @@ namespace N6_QLKHO
             }
             catch (Exception ex)
             {
-                lblLoi.Text = "Lỗi kết nối hoặc truy xuất cơ sở dữ liệu: " + ex.Message;
-                lblLoi.Visible = true;
+                ThongBao("Lỗi kết nối hoặc truy xuất cơ sở dữ liệu: " + LoiThanThien(ex), false);
             }
         }
 
@@ -178,45 +220,69 @@ namespace N6_QLKHO
                     khach = rowDon["TenKhachHang"].ToString(),
                     sdt = rowDon["SoDienThoai"].ToString(),
                     ngay = ngay.ToString("dd/MM/yyyy HH:mm"),
-                    ngayRaw = ngay.ToString("yyyy-MM-ddTHH:mm"), // Dùng để gán vào input datetime-local khi sửa
+                    ngayRaw = ngay.ToString("yyyy-MM-ddTHH:mm"), // gán vào input datetime-local khi sửa
                     trangThai = rowDon["TrangThai"].ToString(),
                     dong = dsChiTiet
                 };
             }
 
-            var serializer = new JavaScriptSerializer();
-            return serializer.Serialize(dict);
+            return DuaVaoJs(new JavaScriptSerializer().Serialize(dict));
         }
 
+        // =====================================================================
+        //  XÓA
+        // =====================================================================
         protected void lvDonHang_ItemCommand(object sender, ListViewCommandEventArgs e)
         {
+            if (e.CommandName != "XoaDon") return;
+
             string maDonHang = e.CommandArgument.ToString();
 
-            if (e.CommandName == "XoaDon")
+            try
             {
-                try
+                using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
                 {
-                    using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
+                    conn.Open();
+                    using (SqlTransaction tran = conn.BeginTransaction())
                     {
-                        string query = "DELETE FROM DonDatHang WHERE MaDonHang = @MaDonHang";
-                        using (SqlCommand cmd = new SqlCommand(query, conn))
+                        try
                         {
-                            cmd.Parameters.AddWithValue("@MaDonHang", maDonHang);
-                            conn.Open();
-                            cmd.ExecuteNonQuery();
+                            // Xóa chi tiết trước rồi mới xóa đơn (tránh lỗi khóa ngoại)
+                            using (SqlCommand cmd = new SqlCommand("DELETE FROM ChiTietDonDatHang WHERE MaDonHang = @MaDonHang", conn, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@MaDonHang", maDonHang);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            int soDong;
+                            using (SqlCommand cmd = new SqlCommand("DELETE FROM DonDatHang WHERE MaDonHang = @MaDonHang", conn, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@MaDonHang", maDonHang);
+                                soDong = cmd.ExecuteNonQuery();
+                            }
+
+                            if (soDong == 0)
+                                throw new Exception("Không tìm thấy đơn hàng " + maDonHang + " (có thể đã bị xóa trước đó).");
+
+                            tran.Commit();
+                        }
+                        catch
+                        {
+                            tran.Rollback();
+                            throw;
                         }
                     }
-                    LoadDanhSachDonHang();
                 }
-                catch (Exception ex)
-                {
-                    lblLoi.Text = "Lỗi khi xóa: " + ex.Message;
-                    lblLoi.Visible = true;
-                }
-            }
-        }
 
-      
+                ThongBao("Xóa đơn hàng " + maDonHang + " thành công!", true);
+            }
+            catch (Exception ex)
+            {
+                ThongBao("Xóa đơn hàng thất bại: " + LoiThanThien(ex), false);
+            }
+
+            LoadDanhSachDonHang();
+        }
 
         protected static string FormatNgay(object value)
         {
@@ -249,12 +315,12 @@ namespace N6_QLKHO
             }
         }
 
-
-        // them moi
-
+        // =====================================================================
+        //  THÊM / SỬA
+        // =====================================================================
         protected void btnLuuDon_Click(object sender, EventArgs e)
         {
-            string cheDo = hdCheDo.Value;
+            string cheDo = hdCheDo.Value == "Sua" ? "Sua" : "Them";
             string maDon = mdMaDon.Text.Trim();
             string tenKhach = mdTenKhach.Text.Trim();
             string sdt = mdSdt.Text.Trim();
@@ -264,54 +330,104 @@ namespace N6_QLKHO
             if (!DateTime.TryParse(mdNgayDat.Text, out ngayDat))
                 ngayDat = DateTime.Now;
 
-            // Lấy danh sách sản phẩm từ form
-            string[] maHang = Request.Form.GetValues(ddlHangHoa.UniqueID)
-    ?? new string[0];
+            // Lấy danh sách dòng hàng hóa từ form
+            string[] maHang = Request.Form.GetValues(ddlHangHoa.UniqueID) ?? new string[0];
+            string[] soLuong = Request.Form.GetValues("SoLuong") ?? new string[0];
+            string[] donGia = Request.Form.GetValues("DonGia") ?? new string[0];
 
-            string[] soLuong = Request.Form.GetValues("SoLuong");
-            string[] donGia = Request.Form.GetValues("DonGia");
+            string loi = null;
+            var dsDong = new List<DongHang>();
 
+            // ---- Kiểm tra dữ liệu đầu vào ----
             if (string.IsNullOrEmpty(maDon))
             {
-                lblLoi.Text = "Mã đơn hàng không được để trống!";
-                lblLoi.Visible = true;
-                return;
+                loi = "Mã đơn hàng không được để trống!";
             }
-
-            if (soLuong == null || donGia == null ||
-                maHang.Length != soLuong.Length ||
-                maHang.Length != donGia.Length)
+            else if (string.IsNullOrEmpty(tenKhach))
             {
-                lblLoi.Text = "Dữ liệu hàng hóa không hợp lệ!";
-                lblLoi.Visible = true;
-                return;
+                loi = "Tên khách hàng không được để trống!";
+            }
+            else if (maHang.Length != soLuong.Length || maHang.Length != donGia.Length)
+            {
+                loi = "Dữ liệu hàng hóa không hợp lệ!";
+            }
+            else
+            {
+                var daCo = new HashSet<string>();
+                for (int i = 0; i < maHang.Length; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(maHang[i])) continue;
+
+                    int sl;
+                    decimal gia;
+                    if (!int.TryParse(soLuong[i], out sl) || sl < 1 ||
+                        !decimal.TryParse(donGia[i], NumberStyles.Any, CultureInfo.InvariantCulture, out gia) || gia < 0)
+                    {
+                        loi = "Số lượng hoặc đơn giá không hợp lệ ở dòng " + (i + 1) + "!";
+                        break;
+                    }
+
+                    if (!daCo.Add(maHang[i]))
+                    {
+                        loi = "Hàng hóa " + maHang[i] + " bị trùng ở nhiều dòng!";
+                        break;
+                    }
+
+                    dsDong.Add(new DongHang { MaHang = maHang[i], SoLuong = sl, DonGia = gia });
+                }
+
+                if (loi == null && dsDong.Count == 0)
+                    loi = "Vui lòng chọn ít nhất một hàng hóa cho đơn!";
             }
 
+            // ---- Ghi vào CSDL ----
+            if (loi == null)
+            {
+                try
+                {
+                    LuuDonHang(cheDo, maDon, ngayDat, tenKhach, sdt, trangThai, dsDong);
+                }
+                catch (Exception ex)
+                {
+                    loi = LoiThanThien(ex);
+                }
+            }
+
+            if (loi != null)
+            {
+                ThongBao((cheDo == "Them" ? "Thêm mới" : "Cập nhật") + " đơn đặt hàng thất bại: " + loi, false);
+                MoLaiModal(cheDo, maHang, soLuong, donGia); // giữ nguyên dữ liệu người dùng đã nhập
+            }
+            else
+            {
+                ThongBao((cheDo == "Them" ? "Thêm mới" : "Cập nhật") + " đơn đặt hàng " + maDon + " thành công!", true);
+            }
+
+            // Luôn nạp lại danh sách để ChiTietJson (dùng cho nút Chi tiết / Sửa) luôn có dữ liệu
+            LoadDanhSachDonHang();
+        }
+
+        private void LuuDonHang(string cheDo, string maDon, DateTime ngayDat, string tenKhach,
+                                string sdt, string trangThai, List<DongHang> dsDong)
+        {
             using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
             {
                 conn.Open();
-
                 using (SqlTransaction tran = conn.BeginTransaction())
                 {
                     try
                     {
                         if (cheDo == "Them")
                         {
-                            string checkSql =
-                                "SELECT COUNT(1) FROM DonDatHang WHERE MaDonHang = @MaDon";
-
-                            using (SqlCommand cmd = new SqlCommand(checkSql, conn, tran))
+                            using (SqlCommand cmd = new SqlCommand("SELECT COUNT(1) FROM DonDatHang WHERE MaDonHang = @MaDon", conn, tran))
                             {
                                 cmd.Parameters.AddWithValue("@MaDon", maDon);
-
                                 if ((int)cmd.ExecuteScalar() > 0)
-                                    throw new Exception("Mã đơn hàng đã tồn tại!");
+                                    throw new Exception("Mã đơn hàng " + maDon + " đã tồn tại!");
                             }
 
-                            string sql = @"INSERT INTO DonDatHang
-                        (MaDonHang, NgayDatHang, TenKhachHang, SoDienThoai, TrangThai)
-                        VALUES (@MaDon, @NgayDat, @TenKhach, @Sdt, @TrangThai)";
-
+                            string sql = @"INSERT INTO DonDatHang (MaDonHang, NgayDatHang, TenKhachHang, SoDienThoai, TrangThai)
+                                           VALUES (@MaDon, @NgayDat, @TenKhach, @Sdt, @TrangThai)";
                             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
                             {
                                 cmd.Parameters.AddWithValue("@MaDon", maDon);
@@ -325,12 +441,12 @@ namespace N6_QLKHO
                         else
                         {
                             string sql = @"UPDATE DonDatHang SET
-                        NgayDatHang = @NgayDat,
-                        TenKhachHang = @TenKhach,
-                        SoDienThoai = @Sdt,
-                        TrangThai = @TrangThai
-                        WHERE MaDonHang = @MaDon";
-
+                                           NgayDatHang = @NgayDat,
+                                           TenKhachHang = @TenKhach,
+                                           SoDienThoai = @Sdt,
+                                           TrangThai = @TrangThai
+                                           WHERE MaDonHang = @MaDon";
+                            int soDong;
                             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
                             {
                                 cmd.Parameters.AddWithValue("@MaDon", maDon);
@@ -338,74 +454,62 @@ namespace N6_QLKHO
                                 cmd.Parameters.AddWithValue("@TenKhach", tenKhach);
                                 cmd.Parameters.AddWithValue("@Sdt", sdt);
                                 cmd.Parameters.AddWithValue("@TrangThai", trangThai);
-                                cmd.ExecuteNonQuery();
+                                soDong = cmd.ExecuteNonQuery();
                             }
 
-                            // Xóa chi tiết cũ để cập nhật chi tiết mới
-                            using (SqlCommand cmd = new SqlCommand(
-                                "DELETE FROM ChiTietDonDatHang WHERE MaDonHang = @MaDon",
-                                conn, tran))
+                            if (soDong == 0)
+                                throw new Exception("Không tìm thấy đơn hàng " + maDon + " để cập nhật.");
+
+                            // Xóa chi tiết cũ để ghi chi tiết mới
+                            using (SqlCommand cmd = new SqlCommand("DELETE FROM ChiTietDonDatHang WHERE MaDonHang = @MaDon", conn, tran))
                             {
                                 cmd.Parameters.AddWithValue("@MaDon", maDon);
                                 cmd.ExecuteNonQuery();
                             }
                         }
 
-                        // Lưu từng sản phẩm vào bảng ChiTietDonDatHang
-                        for (int i = 0; i < maHang.Length; i++)
+                        foreach (DongHang d in dsDong)
                         {
-                            if (string.IsNullOrWhiteSpace(maHang[i]))
-                                continue;
-
-                            int sl;
-                            decimal gia;
-
-                            if (!int.TryParse(soLuong[i], out sl) || sl < 1 ||
-                                !decimal.TryParse(
-                                    donGia[i],
-                                    System.Globalization.NumberStyles.Any,
-                                    System.Globalization.CultureInfo.InvariantCulture,
-                                    out gia) || gia < 0)
-                            {
-                                throw new Exception("Số lượng hoặc đơn giá không hợp lệ!");
-                            }
-
-                            string sql = @"INSERT INTO ChiTietDonDatHang
-                        (MaDonHang, MaHangHoa, SoLuongDat, DonGia)
-                        VALUES (@MaDon, @MaHang, @SoLuong, @DonGia)";
-
+                            string sql = @"INSERT INTO ChiTietDonDatHang (MaDonHang, MaHangHoa, SoLuongDat, DonGia)
+                                           VALUES (@MaDon, @MaHang, @SoLuong, @DonGia)";
                             using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
                             {
                                 cmd.Parameters.AddWithValue("@MaDon", maDon);
-                                cmd.Parameters.AddWithValue("@MaHang", maHang[i]);
-                                cmd.Parameters.AddWithValue("@SoLuong", sl);
-                                cmd.Parameters.AddWithValue("@DonGia", gia);
+                                cmd.Parameters.AddWithValue("@MaHang", d.MaHang);
+                                cmd.Parameters.AddWithValue("@SoLuong", d.SoLuong);
+                                cmd.Parameters.AddWithValue("@DonGia", d.DonGia);
                                 cmd.ExecuteNonQuery();
                             }
                         }
 
                         tran.Commit();
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         tran.Rollback();
-                        lblLoi.Text = "Lỗi lưu đơn hàng: " + ex.Message;
-                        lblLoi.Visible = true;
-                        return;
+                        throw;
                     }
                 }
             }
-
-            // Tải lại dữ liệu sau khi lưu
-            LoadDanhSachHangHoa();
-            LoadDanhSachDonHang();
-
-            ClientScript.RegisterStartupScript(
-                this.GetType(),
-                "HideModal",
-                "var m = bootstrap.Modal.getInstance(document.getElementById('modalDonDatHang')); if(m) m.hide();",
-                true);
         }
 
+        // Khi lưu lỗi: mở lại modal + dựng lại các dòng hàng hóa đã nhập (postback làm mất dòng thêm bằng JS)
+        private void MoLaiModal(string cheDo, string[] maHang, string[] soLuong, string[] donGia)
+        {
+            var dong = new List<object>();
+            for (int i = 0; i < maHang.Length; i++)
+            {
+                dong.Add(new
+                {
+                    ma = maHang[i],
+                    sl = i < soLuong.Length ? soLuong[i] : "1",
+                    gia = i < donGia.Length ? donGia[i] : "0"
+                });
+            }
+
+            string json = DuaVaoJs(new JavaScriptSerializer().Serialize(dong));
+            string js = "window.addEventListener('load',function(){khoiPhucForm('" + cheDo + "'," + json + ");});";
+            ClientScript.RegisterStartupScript(this.GetType(), "KhoiPhucForm", js, true);
+        }
     }
 }

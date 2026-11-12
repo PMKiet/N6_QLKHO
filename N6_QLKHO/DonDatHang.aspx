@@ -3,6 +3,9 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
 
+    <!-- Khung chứa thông báo (toast) - cố định góc phải trên, JS sẽ thêm thông báo vào đây -->
+    <div id="khungThongBao" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;"></div>
+
     <!-- Tiêu đề trang -->
     <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-4">
         <div>
@@ -11,8 +14,6 @@
         </div>
         <button type="button" class="btn btn-primary" id="btnThemDon" data-bs-toggle="modal" data-bs-target="#modalDonDatHang" onclick="moModalThem()">Thêm đơn đặt hàng</button>
     </div>
-
-    <asp:Label ID="lblLoi" runat="server" Visible="false" CssClass="alert alert-danger d-block" role="alert"></asp:Label>
 
     <!-- Bộ lọc tra cứu theo mã / ngày -->
     <div class="card border-0 shadow-sm mb-4">
@@ -80,14 +81,14 @@
                             <!-- Nút xem chi tiết (gắn thêm data-ma để JS nhận diện) -->
                             <button type="button" class="btn btn-sm btn-outline-secondary" 
                                     data-bs-toggle="modal" data-bs-target="#modalChiTiet" 
-                                    data-ma="<%# Eval("MaDonHang") %>">
+                                    data-ma="<%#: Eval("MaDonHang") %>">
                                 Chi tiết
                             </button>
                             
                             <!-- Nút sửa (gắn thêm data-ma và gọi hàm JS mở modal sửa) -->
                             <button type="button" class="btn btn-sm btn-outline-primary" 
                                     data-bs-toggle="modal" data-bs-target="#modalDonDatHang" 
-                                    data-ma="<%# Eval("MaDonHang") %>"
+                                    data-ma="<%#: Eval("MaDonHang") %>"
                                     onclick="moModalSua(this)">
                                 Sửa
                             </button>
@@ -215,19 +216,18 @@
                                     <th scope="col"><span class="visually-hidden">Xóa dòng</span></th>
                                 </tr>
                             </thead>
-                           <tbody id="tbChiTiet">
+                            <tbody id="tbChiTiet">
                                 <tr>
                                     <td>
-                                       <asp:DropDownList ID="ddlHangHoa" runat="server"
-    CssClass="form-select form-select-sm ddl-hang-hoa">
-</asp:DropDownList>
+                                        <asp:DropDownList ID="ddlHangHoa" runat="server" CssClass="form-select form-select-sm ddl-hang-hoa">
+                                        </asp:DropDownList>
                                     </td>
                                     <td><input type="number" name="SoLuong" min="1"
-       class="form-control form-control-sm inp-so-luong"
-       value="1" aria-label="Số lượng" /></td>
+                                               class="form-control form-control-sm inp-so-luong"
+                                               value="1" aria-label="Số lượng" /></td>
                                     <td><input type="number" name="DonGia" min="0" step="any"
-       class="form-control form-control-sm inp-don-gia"
-       value="0" aria-label="Đơn giá" /></td>
+                                               class="form-control form-control-sm inp-don-gia"
+                                               value="0" aria-label="Đơn giá" /></td>
                                     <td class="text-end thanh-tien">0 ₫</td>
                                     <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger btn-xoa-dong">Xóa</button></td>
                                 </tr>
@@ -250,13 +250,58 @@
         </div>
     </div>
 
-    <!-- JavaScript xử lý Modal -->
+    <!-- JavaScript xử lý Modal + Thông báo -->
     <script>
         var duLieu = <%= ChiTietJson %>;
         var giaHang = <%= GiaHangJson %>;
-        
+
         function dinhDangTien(so) {
             return so.toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function escHtml(s) {
+            return String(s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        /* =====================================================
+           THÔNG BÁO (toast): thành công = xanh, thất bại = đỏ
+           - Tự ẩn sau 4 giây (rê chuột vào thì tạm dừng đếm)
+           - Bấm nút X để tắt ngay
+           ===================================================== */
+        function hienThongBao(noiDung, thanhCong) {
+            var khung = document.getElementById('khungThongBao');
+            if (!khung) return;
+
+            var el = document.createElement('div');
+            el.className = 'toast align-items-center border-0 text-bg-' + (thanhCong ? 'success' : 'danger');
+            el.setAttribute('role', thanhCong ? 'status' : 'alert');
+            el.setAttribute('aria-live', thanhCong ? 'polite' : 'assertive');
+            el.setAttribute('aria-atomic', 'true');
+
+            var wrap = document.createElement('div');
+            wrap.className = 'd-flex';
+
+            var body = document.createElement('div');
+            body.className = 'toast-body';
+            body.textContent = noiDung;          // textContent -> an toàn, không chạy HTML
+
+            var nut = document.createElement('button');
+            nut.type = 'button';
+            nut.className = 'btn-close btn-close-white me-2 m-auto';
+            nut.setAttribute('data-bs-dismiss', 'toast');
+            nut.setAttribute('aria-label', 'Đóng');
+
+            wrap.appendChild(body);
+            wrap.appendChild(nut);
+            el.appendChild(wrap);
+            khung.appendChild(el);
+
+            el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+
+            var toast = new bootstrap.Toast(el, { autohide: true, delay: 4000 });
+            toast.show();
         }
 
         /* --- Xử lý tính tiền trong modal Thêm/Sửa --- */
@@ -283,7 +328,6 @@
             // Khi chọn hàng hóa -> tự điền đơn giá tương ứng 
             tbody.addEventListener('change', function (e) {
                 var select = e.target.closest('.ddl-hang-hoa');
-
                 if (!select) return;
 
                 var tr = select.closest('tr');
@@ -333,11 +377,15 @@
             document.getElementById('<%= mdNgayDat.ClientID %>').value = '';
             document.getElementById('<%= mdTenKhach.ClientID %>').value = '';
             document.getElementById('<%= mdSdt.ClientID %>').value = '';
-            
+
             // Reset bảng chi tiết về 1 dòng mặc định
             if (tbody && dongMau) {
                 tbody.innerHTML = '';
-                tbody.appendChild(dongMau.cloneNode(true));
+                var tr = dongMau.cloneNode(true);
+                tr.querySelector('select').selectedIndex = 0;
+                tr.querySelector('.inp-so-luong').value = 1;
+                tr.querySelector('.inp-don-gia').value = 0;
+                tbody.appendChild(tr);
                 tinhTien();
             }
         }
@@ -350,18 +398,17 @@
 
             document.getElementById('modalDonDatHangLabel').textContent = 'Sửa đơn đặt hàng: ' + ma;
             document.getElementById('<%= hdCheDo.ClientID %>').value = 'Sua';
-            
+
             var txtMa = document.getElementById('<%= mdMaDon.ClientID %>');
             txtMa.value = ma;
             txtMa.readOnly = true; // Khóa mã đơn không cho sửa khóa chính
 
-            // Format ngày dạng yyyy-MM-ddTHH:mm cho input datetime-local
             if (don.ngayRaw) {
                 document.getElementById('<%= mdNgayDat.ClientID %>').value = don.ngayRaw;
             }
             document.getElementById('<%= mdTenKhach.ClientID %>').value = don.khach;
             document.getElementById('<%= mdSdt.ClientID %>').value = don.sdt;
-            
+
             var ddlTrangThai = document.getElementById('<%= mdTrangThai.ClientID %>');
             for (var i = 0; i < ddlTrangThai.options.length; i++) {
                 if (ddlTrangThai.options[i].value === don.trangThai) {
@@ -390,7 +437,29 @@
             }
         }
 
-        /* --- Xổ dữ liệu vào Modal Chi Tiết --- */
+        /* --- Khi lưu thất bại: mở lại modal và dựng lại các dòng đã nhập --- */
+        function khoiPhucForm(cheDo, dong) {
+            var txtMa = document.getElementById('<%= mdMaDon.ClientID %>');
+            txtMa.readOnly = (cheDo === 'Sua');
+            document.getElementById('modalDonDatHangLabel').textContent =
+                cheDo === 'Sua' ? 'Sửa đơn đặt hàng: ' + txtMa.value : 'Thêm đơn đặt hàng';
+
+            if (tbody && dongMau && dong && dong.length) {
+                tbody.innerHTML = '';
+                dong.forEach(function (d) {
+                    var tr = dongMau.cloneNode(true);
+                    tr.querySelector('select').value = d.ma;
+                    tr.querySelector('.inp-so-luong').value = d.sl;
+                    tr.querySelector('.inp-don-gia').value = d.gia;
+                    tbody.appendChild(tr);
+                });
+                tinhTien();
+            }
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDonDatHang')).show();
+        }
+
+        /* --- Đổ dữ liệu vào Modal Chi Tiết --- */
         var modalChiTiet = document.getElementById('modalChiTiet');
         if (modalChiTiet) {
             modalChiTiet.addEventListener('show.bs.modal', function (e) {
@@ -412,8 +481,8 @@
                     var thanhTien = d.SoLuong * d.DonGia;
                     tong += thanhTien;
                     var tr = document.createElement('tr');
-                    tr.innerHTML = '<td>' + d.MaHang + '</td>' +
-                        '<td>' + d.TenHang + '</td>' +
+                    tr.innerHTML = '<td>' + escHtml(d.MaHang) + '</td>' +
+                        '<td>' + escHtml(d.TenHang) + '</td>' +
                         '<td class="text-end">' + d.SoLuong.toLocaleString('vi-VN') + '</td>' +
                         '<td class="text-end">' + dinhDangTien(d.DonGia) + '</td>' +
                         '<td class="text-end">' + dinhDangTien(thanhTien) + '</td>';
@@ -423,5 +492,6 @@
             });
         }
     </script>
+
 
 </asp:Content>
