@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Web.Script.Serialization;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Text.RegularExpressions;
 
 namespace N6_QLKHO
 {
@@ -324,9 +325,9 @@ namespace N6_QLKHO
             string sdt = mdSdt.Text.Trim();
             string trangThai = mdTrangThai.SelectedValue;
 
+            // Ngày đặt: bắt buộc nhập (không còn tự gán DateTime.Now)
             DateTime ngayDat;
-            if (!DateTime.TryParse(mdNgayDat.Text, out ngayDat))
-                ngayDat = DateTime.Now;
+            bool coNgay = DateTime.TryParse(mdNgayDat.Text, out ngayDat);
 
             // Lấy danh sách dòng hàng hóa từ form
             string[] maHang = Request.Form.GetValues(ddlHangHoa.UniqueID) ?? new string[0];
@@ -336,14 +337,30 @@ namespace N6_QLKHO
             string loi = null;
             var dsDong = new List<DongHang>();
 
-            // ---- Kiểm tra dữ liệu đầu vào ----
+            // ---- Kiểm tra dữ liệu đầu vào: tất cả đều bắt buộc ----
             if (string.IsNullOrEmpty(maDon))
             {
                 loi = "Mã đơn hàng không được để trống!";
             }
+            else if (!coNgay)
+            {
+                loi = "Ngày đặt không được để trống!";
+            }
             else if (string.IsNullOrEmpty(tenKhach))
             {
                 loi = "Tên khách hàng không được để trống!";
+            }
+            else if (string.IsNullOrEmpty(sdt))
+            {
+                loi = "Số điện thoại không được để trống!";
+            }
+            else if (!Regex.IsMatch(sdt, @"^\d{9,11}$"))
+            {
+                loi = "Số điện thoại không hợp lệ (chỉ gồm 9–11 chữ số)!";
+            }
+            else if (maHang.Length == 0)
+            {
+                loi = "Vui lòng chọn ít nhất một hàng hóa cho đơn!";
             }
             else if (maHang.Length != soLuong.Length || maHang.Length != donGia.Length)
             {
@@ -354,14 +371,18 @@ namespace N6_QLKHO
                 var daCo = new HashSet<string>();
                 for (int i = 0; i < maHang.Length; i++)
                 {
-                    if (string.IsNullOrWhiteSpace(maHang[i])) continue;
+                    string dong = " ở dòng " + (i + 1) + "!";
+
+                    if (string.IsNullOrWhiteSpace(maHang[i])) { loi = "Vui lòng chọn hàng hóa" + dong; break; }
+                    if (string.IsNullOrWhiteSpace(soLuong[i])) { loi = "Số lượng không được để trống" + dong; break; }
+                    if (string.IsNullOrWhiteSpace(donGia[i])) { loi = "Đơn giá không được để trống" + dong; break; }
 
                     int sl;
                     decimal gia;
                     if (!int.TryParse(soLuong[i], out sl) || sl < 1 ||
                         !decimal.TryParse(donGia[i], NumberStyles.Any, CultureInfo.InvariantCulture, out gia) || gia < 0)
                     {
-                        loi = "Số lượng hoặc đơn giá không hợp lệ ở dòng " + (i + 1) + "!";
+                        loi = "Số lượng hoặc đơn giá không hợp lệ" + dong;
                         break;
                     }
 
@@ -373,9 +394,6 @@ namespace N6_QLKHO
 
                     dsDong.Add(new DongHang { MaHang = maHang[i], SoLuong = sl, DonGia = gia });
                 }
-
-                if (loi == null && dsDong.Count == 0)
-                    loi = "Vui lòng chọn ít nhất một hàng hóa cho đơn!";
             }
 
             // ---- Ghi vào CSDL ----
