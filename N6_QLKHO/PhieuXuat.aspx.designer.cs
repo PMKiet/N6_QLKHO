@@ -24,6 +24,15 @@ namespace N6_QLKHO
         protected global::System.Web.UI.WebControls.Label lblThongBao;
 
         /// <summary>
+        /// pnlNhapLieu control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlNhapLieu;
+
+        /// <summary>
         /// txtMaPhieuXuat control.
         /// </summary>
         /// <remarks>
@@ -51,13 +60,13 @@ namespace N6_QLKHO
         protected global::System.Web.UI.WebControls.DropDownList ddlDonHang;
 
         /// <summary>
-        /// ddlNhanVien control.
+        /// txtNhanVien control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlNhanVien;
+        protected global::System.Web.UI.WebControls.TextBox txtNhanVien;
 
         /// <summary>
         /// ddlTrangThai control.
@@ -112,6 +121,69 @@ namespace N6_QLKHO
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.GridView gvChiTietPhieuXuat;
+
+        /// <summary>
+        /// litTongTamTinh control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litTongTamTinh;
+
+        /// <summary>
+        /// btnXemTruoc control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnXemTruoc;
+
+        /// <summary>
+        /// pnlXemTruoc control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlXemTruoc;
+
+        /// <summary>
+        /// litThongTinXemTruoc control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litThongTinXemTruoc;
+
+        /// <summary>
+        /// gvXemTruoc control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView gvXemTruoc;
+
+        /// <summary>
+        /// litTongTienXemTruoc control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litTongTienXemTruoc;
+
+        /// <summary>
+        /// btnQuayLai control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnQuayLai;
 
         /// <summary>
         /// btnLuuPhieuXuat control.

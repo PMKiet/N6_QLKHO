@@ -7,6 +7,12 @@
             border: 1px solid #e2e8f0;
             border-radius: 12px;
         }
+        .page-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; flex-shrink: 0;
+        }
+        .section-title { font-size: 1rem; font-weight: 700; margin: 0; }
         .table-custom th {
             background-color: #f8fafc;
             color: #475569;
@@ -15,132 +21,282 @@
             font-size: 0.75rem;
             letter-spacing: 0.5px;
             padding: 12px 16px;
+            white-space: nowrap;
         }
         .table-custom td {
             padding: 14px 16px;
             color: #1e293b;
             vertical-align: middle;
         }
+        .input-group-text { background: #f8fafc; color: #64748b; }
+        .readonly-user { background-color: #f1f5f9 !important; font-weight: 600; }
+        .add-row-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; }
+        .form-control.is-invalid, .form-select.is-invalid { background-image: none; }
+        .btn[disabled] { cursor: not-allowed; }
+        @media print { .no-print { display: none !important; } }
     </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
-    
+
     <!-- Tiêu đề trang -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="page-icon bg-success bg-opacity-10 text-success"><i class="fa-solid fa-file-arrow-down"></i></div>
         <div>
             <h3 class="fw-bold text-dark mb-1">Lập Phiếu Nhập Kho</h3>
-            <p class="text-muted small mb-0">Tạo phiếu nhập hàng hóa từ nhà cung cấp bổ sung vào kho.</p>
+            <p class="text-muted small mb-0">Tạo phiếu nhập hàng hóa từ nhà cung cấp. Tồn kho được cộng theo từng lô và hạn sử dụng.</p>
         </div>
     </div>
 
-    <!-- Label thông báo lỗi hoặc thành công -->
-    <asp:Label ID="lblThongBao" runat="server" CssClass="d-block mb-3" EnableViewState="false"></asp:Label> 
+    <!-- Thông báo từ server (thành công / lỗi) và từ trình duyệt (kiểm tra nhanh) -->
+    <asp:Label ID="lblThongBao" runat="server" CssClass="d-block" EnableViewState="false"></asp:Label>
+    <div id="clientErr"></div>
 
-    <!-- KHUNG THÔNG TIN CHUNG PHIẾU NHẬP -->
-    <div class="card page-header-card shadow-sm mb-4">
-        <div class="card-header bg-transparent py-3 border-0">
-            <h5 class="card-title text-success mb-0 fw-bold"><i class="fa-solid fa-file-arrow-down me-2"></i> Thông Tin Chung Phiếu Nhập</h5>
-        </div>
-        <div class="card-body px-4 pb-4 pt-0">
-            <div class="row g-3">
-                <div class="col-12 col-md-4">
-                    <label class="form-label fw-semibold small text-secondary">Mã Phiếu Nhập <span class="text-danger">*</span></label>
-                    <asp:TextBox ID="txtMaPhieuNhap" runat="server" CssClass="form-control" Placeholder="VD: PN001"></asp:TextBox>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label class="form-label fw-semibold small text-secondary">Ngày Nhập <span class="text-danger">*</span></label>
-                    <asp:TextBox ID="txtNgayNhap" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
-                </div>
-                <div class="col-12 col-md-4">
-                    <label class="form-label fw-semibold small text-secondary">Nhà Cung Cấp <span class="text-danger">*</span></label>
-                    <asp:DropDownList ID="ddlNhaCungCap" runat="server" CssClass="form-select">
-                        <asp:ListItem Text="-- Chọn nhà cung cấp --" Value="" />
-                    </asp:DropDownList>
-                </div>
-                <div class="col-12 col-md-6">
-                    <label class="form-label fw-semibold small text-secondary">Nhân Viên Thực Hiện <span class="text-danger">*</span></label>
-                    <asp:DropDownList ID="ddlNhanVien" runat="server" CssClass="form-select">
-                        <asp:ListItem Text="-- Chọn nhân viên kho --" Value="" />
-                    </asp:DropDownList>
-                </div>
-                <div class="col-12 col-md-6">
-                    <label class="form-label fw-semibold small text-secondary">Trạng Thái Thanh Toán <span class="text-danger">*</span></label>
-                    <asp:DropDownList ID="ddlTrangThai" runat="server" CssClass="form-select">
-                        <asp:ListItem Text="Đã thanh toán" Value="Đã thanh toán" />
-                        <asp:ListItem Text="Chưa thanh toán" Value="Chưa thanh toán" />
-                    </asp:DropDownList>
-                </div>
+    <!-- ===== BƯỚC 1: NHẬP THÔNG TIN ===== -->
+    <asp:Panel ID="pnlNhapLieu" runat="server">
+
+        <!-- KHUNG THÔNG TIN CHUNG -->
+        <div class="card page-header-card shadow-sm mb-4">
+            <div class="card-header bg-transparent py-3 border-0">
+                <h5 class="section-title text-success"><i class="fa-solid fa-file-arrow-down me-2"></i> Thông Tin Chung Phiếu Nhập</h5>
             </div>
-        </div>
-    </div>
-
-    <!-- KHU VỰC CHI TIẾT HÀNG NHẬP -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-        <div class="card-header bg-white py-3 border-0">
-            <h5 class="card-title text-success mb-0 fw-bold"><i class="fa-solid fa-boxes-stacked me-2"></i> Chi Tiết Hàng Nhập Kho</h5>
-        </div>
-        <div class="card-body px-4 pb-4">
-           <!-- Form dòng nhập nhanh sản phẩm nhập -->
-            <div class="row g-3 align-items-end mb-4 p-3 bg-light rounded-3 border">
-                <div class="col-12 col-md-4">
-                    <label class="form-label fw-semibold small text-secondary">Chọn Hàng Hóa</label>
-                    <asp:DropDownList ID="ddlHangHoa" runat="server" CssClass="form-select">
-                        <asp:ListItem Text="-- Chọn hàng hóa --" Value="" />
-                    </asp:DropDownList>
-                </div>
-                <div class="col-12 col-md-2">
-                    <label class="form-label fw-semibold small text-secondary">Số Lượng</label>
-                    <asp:TextBox ID="txtSoLuongNhap" runat="server" CssClass="form-control" TextMode="Number" Placeholder="0"></asp:TextBox>
-                </div>
-                <div class="col-12 col-md-2">
-                    <label class="form-label fw-semibold small text-secondary">Đơn Giá Nhập</label>
-                    <asp:TextBox ID="txtDonGiaNhap" runat="server" CssClass="form-control" TextMode="Number" Placeholder="0"></asp:TextBox>
-                </div>
-                <div class="col-12 col-md-2">
-                    <label class="form-label fw-semibold small text-secondary">Hạn Dùng Lô</label>
-                    <asp:TextBox ID="txtHanSuDungLo" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
-                </div>
-                <div class="col-12 col-md-2">
-                    <asp:Button ID="btnThemDong" runat="server" Text="Thêm dòng" CssClass="btn btn-success w-100 fw-semibold" OnClick="btnThemDong_Click" />
-                </div>
-            </div>
-
-            <!-- Bảng hiển thị danh sách sản phẩm nhập tạm -->
-            <div class="table-responsive">
-                <asp:GridView ID="gvChiTietPhieuNhap" runat="server" CssClass="table table-custom table-hover mb-0 align-middle text-nowrap" AutoGenerateColumns="false" GridLines="None" OnRowCommand="gvChiTietPhieuNhap_RowCommand">
-                    <Columns>
-                        <asp:BoundField DataField="MaHangHoa" HeaderText="Mã Hàng" />
-                        <asp:TemplateField HeaderText="Tên Hàng Hóa">
-                            <ItemTemplate>
-                                <span class="fw-semibold text-dark"><%# Eval("TenHangHoa") %></span>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                        <asp:BoundField DataField="SoLuongNhap" HeaderText="Số Lượng" />
-                        <asp:BoundField DataField="DonGiaNhap" HeaderText="Đơn Giá" DataFormatString="{0:N0} đ" />
-                        <asp:BoundField DataField="HanSuDungLo" HeaderText="Hạn Dùng Lô" DataFormatString="{0:dd/MM/yyyy}" />
-                        <asp:TemplateField HeaderText="Thao Tác">
-                            <ItemTemplate>
-                                <asp:LinkButton ID="btnXoaDong" runat="server" CommandName="XoaDong" CommandArgument='<%# Container.DataItemIndex %>' CssClass="btn btn-sm btn-light text-danger border" title="Xóa dòng">
-                                    <i class="fa-solid fa-trash"></i>
-                                </asp:LinkButton>
-                            </ItemTemplate>
-                        </asp:TemplateField>
-                    </Columns>
-                    <EmptyDataTemplate>
-                        <div class="text-center py-4 text-muted">
-                            <i class="fa-solid fa-boxes-packing fs-2 mb-2 text-secondary opacity-50"></i>
-                            <p class="mb-0">Chưa có sản phẩm nào được chọn để nhập kho.</p>
+            <div class="card-body px-4 pb-4 pt-0">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold small text-secondary">Mã Phiếu Nhập <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-hashtag"></i></span>
+                            <asp:TextBox ID="txtMaPhieuNhap" runat="server" CssClass="form-control" MaxLength="10" Placeholder="VD: PN01"></asp:TextBox>
                         </div>
-                    </EmptyDataTemplate>
-                </asp:GridView>
+                        <div class="form-text">Tối đa 10 ký tự: chữ, số, dấu - hoặc _</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold small text-secondary">Ngày Nhập <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-regular fa-calendar"></i></span>
+                            <asp:TextBox ID="txtNgayNhap" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                        </div>
+                        <div class="form-text">Không được chọn ngày trong tương lai</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold small text-secondary">Nhà Cung Cấp <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-truck-field"></i></span>
+                            <asp:DropDownList ID="ddlNhaCungCap" runat="server" CssClass="form-select">
+                                <asp:ListItem Text="-- Chọn nhà cung cấp --" Value="" />
+                            </asp:DropDownList>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold small text-secondary">Người Lập Phiếu</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-user-check"></i></span>
+                            <asp:TextBox ID="txtNhanVien" runat="server" CssClass="form-control readonly-user" ReadOnly="true"></asp:TextBox>
+                        </div>
+                        <div class="form-text">Tự động lấy từ tài khoản đang đăng nhập</div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold small text-secondary">Trạng Thái Thanh Toán <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-money-bill-wave"></i></span>
+                            <asp:DropDownList ID="ddlTrangThai" runat="server" CssClass="form-select">
+                                <asp:ListItem Text="Đã thanh toán" Value="Đã thanh toán" />
+                                <asp:ListItem Text="Chưa thanh toán" Value="Chưa thanh toán" />
+                            </asp:DropDownList>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- NÚT HOÀN TẤT -->
-    <div class="text-end mb-5">
-        <asp:Button ID="btnLuuPhieuNhap" runat="server" Text="Lưu Phiếu Nhập Kho" CssClass="btn btn-success btn-lg px-5 shadow-sm fw-semibold" OnClick="btnLuuPhieuNhap_Click" />
-    </div>
+        <!-- KHU VỰC CHI TIẾT HÀNG -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="section-title text-success"><i class="fa-solid fa-boxes-stacked me-2"></i> Chi Tiết Hàng Nhập Kho</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <!-- Dòng nhập nhanh -->
+                <div class="row g-3 align-items-end mb-4 p-3 add-row-box mx-0">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold small text-secondary">Hàng Hóa</label>
+                        <asp:DropDownList ID="ddlHangHoa" runat="server" CssClass="form-select" onchange="chonHang()">
+                            <asp:ListItem Text="-- Chọn hàng hóa --" Value="" />
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label fw-semibold small text-secondary">Số Lượng</label>
+                        <asp:TextBox ID="txtSoLuongNhap" runat="server" CssClass="form-control" TextMode="Number" min="1" max="1000000" step="1" Placeholder="0"></asp:TextBox>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label fw-semibold small text-secondary">Đơn Giá Nhập (đ)</label>
+                        <asp:TextBox ID="txtDonGiaNhap" runat="server" CssClass="form-control" TextMode="Number" min="0" max="1000000000" step="0.01" Placeholder="0"></asp:TextBox>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <label class="form-label fw-semibold small text-secondary">Hạn Dùng Lô</label>
+                        <asp:TextBox ID="txtHanSuDungLo" runat="server" CssClass="form-control" TextMode="Date"></asp:TextBox>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <asp:Button ID="btnThemDong" runat="server" Text="+ Thêm dòng" CssClass="btn btn-success w-100 fw-semibold" OnClick="btnThemDong_Click" OnClientClick="return kiemTraDong();" />
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách tạm -->
+                <div class="table-responsive">
+                    <asp:GridView ID="gvChiTietPhieuNhap" runat="server" CssClass="table table-custom table-hover mb-0 align-middle" AutoGenerateColumns="false" GridLines="None" OnRowCommand="gvChiTietPhieuNhap_RowCommand">
+                        <Columns>
+                            <asp:TemplateField HeaderText="STT">
+                                <ItemTemplate><%# Container.DataItemIndex + 1 %></ItemTemplate>
+                            </asp:TemplateField>
+                            <asp:BoundField DataField="MaHangHoa" HeaderText="Mã Hàng" />
+                            <asp:TemplateField HeaderText="Tên Hàng Hóa">
+                                <ItemTemplate>
+                                    <span class="fw-semibold text-dark"><%# Server.HtmlEncode(Convert.ToString(Eval("TenHangHoa"))) %></span>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                            <asp:BoundField DataField="SoLuongNhap" HeaderText="Số Lượng" DataFormatString="{0:N0}" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" />
+                            <asp:BoundField DataField="DonGiaNhap" HeaderText="Đơn Giá" DataFormatString="{0:N0} đ" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" />
+                            <asp:BoundField DataField="HanSuDungLo" HeaderText="Hạn Dùng Lô" DataFormatString="{0:dd/MM/yyyy}" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" />
+                            <asp:BoundField DataField="ThanhTien" HeaderText="Thành Tiền" DataFormatString="{0:N0} đ" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" ItemStyle-CssClass="fw-semibold" />
+                            <asp:TemplateField HeaderText="Xóa" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center">
+                                <ItemTemplate>
+                                    <asp:LinkButton ID="btnXoaDong" runat="server" CommandName="XoaDong" CommandArgument='<%# Container.DataItemIndex %>' CssClass="btn btn-sm btn-light text-danger border" title="Xóa dòng" OnClientClick="return confirm('Xóa dòng hàng này khỏi phiếu?');">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </asp:LinkButton>
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                        </Columns>
+                        <EmptyDataTemplate>
+                            <div class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-boxes-packing fs-1 mb-2 text-secondary opacity-50"></i>
+                                <p class="mb-0">Chưa có mặt hàng nào. Chọn hàng ở trên rồi bấm <strong>+ Thêm dòng</strong>.</p>
+                            </div>
+                        </EmptyDataTemplate>
+                    </asp:GridView>
+                </div>
+                <asp:Literal ID="litTongTamTinh" runat="server"></asp:Literal>
+            </div>
+        </div>
+
+        <!-- NÚT XEM TRƯỚC -->
+        <div class="text-end mb-5">
+            <asp:Button ID="btnXemTruoc" runat="server" Text="Xem trước phiếu →" CssClass="btn btn-success btn-lg px-5 shadow-sm fw-semibold" OnClick="btnXemTruoc_Click" />
+        </div>
+
+    </asp:Panel>
+
+    <!-- ===== BƯỚC 2: XEM TRƯỚC VÀ XÁC NHẬN ===== -->
+    <asp:Panel ID="pnlXemTruoc" runat="server" Style="display:none">
+        <div class="alert alert-info d-flex align-items-center mb-4 no-print" role="alert">
+            <i class="fa-solid fa-eye me-2"></i>
+            <div>Đây là bản <strong>xem trước</strong>. Phiếu chỉ được lưu và cập nhật tồn kho khi bạn bấm <strong>Xác nhận lập phiếu</strong>.</div>
+        </div>
+
+        <div class="card page-header-card shadow-sm mb-4">
+            <div class="card-header bg-transparent py-3 border-0">
+                <h5 class="section-title text-success"><i class="fa-solid fa-file-arrow-down me-2"></i> Phiếu Nhập Kho</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-0">
+                <asp:Literal ID="litThongTinXemTruoc" runat="server"></asp:Literal>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-body px-4 py-4">
+                <div class="table-responsive">
+                    <asp:GridView ID="gvXemTruoc" runat="server" CssClass="table table-custom table-hover mb-0 align-middle" AutoGenerateColumns="false" GridLines="None">
+                        <Columns>
+                            <asp:TemplateField HeaderText="STT">
+                                <ItemTemplate><%# Container.DataItemIndex + 1 %></ItemTemplate>
+                            </asp:TemplateField>
+                            <asp:BoundField DataField="MaHangHoa" HeaderText="Mã Hàng" />
+                            <asp:BoundField DataField="TenHangHoa" HeaderText="Tên Hàng Hóa" />
+                            <asp:BoundField DataField="SoLuongNhap" HeaderText="Số Lượng" DataFormatString="{0:N0}" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" />
+                            <asp:BoundField DataField="DonGiaNhap" HeaderText="Đơn Giá" DataFormatString="{0:N0} đ" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" />
+                            <asp:BoundField DataField="HanSuDungLo" HeaderText="Hạn Dùng Lô" DataFormatString="{0:dd/MM/yyyy}" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" />
+                            <asp:BoundField DataField="ThanhTien" HeaderText="Thành Tiền" DataFormatString="{0:N0} đ" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" ItemStyle-CssClass="fw-semibold" />
+                        </Columns>
+                    </asp:GridView>
+                </div>
+                <div class="d-flex justify-content-end align-items-center gap-3 mt-3 pt-3 border-top">
+                    <span class="text-secondary fw-semibold">Tổng tiền phiếu:</span>
+                    <span class="fs-4 fw-bold text-success"><asp:Literal ID="litTongTienXemTruoc" runat="server"></asp:Literal></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end mb-5 no-print">
+            <asp:Button ID="btnQuayLai" runat="server" Text="← Quay lại chỉnh sửa" CssClass="btn btn-outline-secondary btn-lg px-4 me-2 fw-semibold" OnClick="btnQuayLai_Click" CausesValidation="false" />
+            <asp:Button ID="btnLuuPhieuNhap" runat="server" Text="Xác nhận lập phiếu nhập" CssClass="btn btn-success btn-lg px-5 shadow-sm fw-semibold" OnClick="btnLuuPhieuNhap_Click" UseSubmitBehavior="false" OnClientClick="this.disabled = true; this.value = 'Đang lưu...';" />
+        </div>
+    </asp:Panel>
+
+    <script>
+        (function () {
+            var ID_SL = '<%= txtSoLuongNhap.ClientID %>';
+            var ID_GIA = '<%= txtDonGiaNhap.ClientID %>';
+            var ID_HH = '<%= ddlHangHoa.ClientID %>';
+            var ID_HAN = '<%= txtHanSuDungLo.ClientID %>';
+            function $(id) { return document.getElementById(id); }
+
+            // Chặn gõ/dán ký tự không hợp lệ ngay trên ô nhập (số âm, ký hiệu e, dấu phẩy...)
+            function chan(el, bannedKeys, pasteRegex) {
+                if (!el) return;
+                el.addEventListener('keydown', function (e) {
+                    if (bannedKeys.indexOf(e.key) >= 0) e.preventDefault();
+                });
+                el.addEventListener('paste', function (e) {
+                    var t = (e.clipboardData || window.clipboardData).getData('text');
+                    if (!pasteRegex.test(t.trim())) e.preventDefault();
+                });
+                el.addEventListener('wheel', function () { el.blur(); });
+            }
+            chan($(ID_SL), ['-', '+', 'e', 'E', '.', ','], /^[0-9]+$/);
+            chan($(ID_GIA), ['-', '+', 'e', 'E', ','], /^[0-9]+(\.[0-9]{1,2})?$/);
+
+            function hienLoi(msg, el) {
+                var box = $('clientErr');
+                box.innerHTML = '';
+                [ID_SL, ID_GIA, ID_HH, ID_HAN].forEach(function (id) { var x = $(id); if (x) x.classList.remove('is-invalid'); });
+                var d = document.createElement('div');
+                d.className = 'alert alert-warning d-flex align-items-start';
+                d.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-2 mt-1"></i>';
+                var s = document.createElement('div');
+                s.textContent = msg;
+                d.appendChild(s);
+                box.appendChild(d);
+                if (el) { el.classList.add('is-invalid'); el.focus(); }
+                return false;
+            }
+
+            // Kiểm tra nhanh phía trình duyệt trước khi gửi lên server (server vẫn kiểm tra lại)
+            window.kiemTraDong = function () {
+                $('clientErr').innerHTML = '';
+                var hh = $(ID_HH), sl = $(ID_SL), gia = $(ID_GIA);
+                if (!hh.value) return hienLoi('Vui lòng chọn hàng hóa.', hh);
+
+                var slText = sl.value.trim();
+                if (!/^[0-9]+$/.test(slText) || parseInt(slText, 10) < 1)
+                    return hienLoi('Số lượng phải là số nguyên dương (từ 1 trở lên).', sl);
+                if (parseInt(slText, 10) > 1000000)
+                    return hienLoi('Số lượng tối đa mỗi dòng là 1.000.000.', sl);
+
+                var giaText = gia.value.trim();
+                if (!/^[0-9]+(\.[0-9]+)?$/.test(giaText) || parseFloat(giaText) <= 0)
+                    return hienLoi('Đơn giá phải là số lớn hơn 0.', gia);
+                if (parseFloat(giaText) > 1000000000)
+                    return hienLoi('Đơn giá tối đa là 1.000.000.000 đ.', gia);
+
+                var han = $(ID_HAN);
+                var d = new Date();
+                var homNay = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                if (!han.value) return hienLoi('Vui lòng chọn hạn sử dụng của lô hàng.', han);
+                if (han.value <= homNay) return hienLoi('Hạn sử dụng phải sau ngày hôm nay (lô đã hết hạn không thể nhập kho).', han);
+
+                return true;
+            };
+
+            window.chonHang = function () { /* phiếu nhập: giá nhập do người dùng tự nhập */ };
+        })();
+    </script>
 
 </asp:Content>
