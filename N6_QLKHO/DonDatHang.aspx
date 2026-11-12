@@ -209,7 +209,7 @@
                         <table class="table table-sm align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col" style="min-width: 140px;">Mã hàng hóa</th>
+                                    <th scope="col" style="min-width: 140px;">Tên hàng hóa</th>
                                     <th scope="col" style="min-width: 90px;">Số lượng</th>
                                     <th scope="col" style="min-width: 120px;">Đơn giá</th>
                                     <th scope="col" class="text-end" style="min-width: 120px;">Thành tiền</th>

@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Web.Script.Serialization;
 using System.Web.UI;
-using System.Web.UI.WebControls; 
+using System.Web.UI.WebControls;
+
 namespace N6_QLKHO
 {
     public partial class DonDatHang : System.Web.UI.Page
     {
-        string chuoiKetNoi = ConfigurationManager.ConnectionStrings["N6_QLKHOVATTUConnectionString"] != null
-                            ? ConfigurationManager.ConnectionStrings["N6_QLKHOVATTUConnectionString"].ConnectionString
-                            : @"Data Source=DESKTOP-UKT66TU;Initial Catalog=N6_QLKHOVATTU;Integrated Security=True;Encrypt=False";
-
         protected string ChiTietJson { get; set; } = "{}";
         protected string GiaHangJson { get; set; } = "{}";
 
@@ -75,7 +71,7 @@ namespace N6_QLKHO
             try
             {
                 var dict = new Dictionary<string, decimal>();
-                using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
+                using (SqlConnection conn = DatabaseHelper.TaoKetNoi())
                 using (SqlCommand cmd = new SqlCommand("SELECT MaHangHoa, DonGia FROM HangHoa", conn))
                 {
                     conn.Open();
@@ -115,7 +111,7 @@ namespace N6_QLKHO
         {
             try
             {
-                using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
+                using (SqlConnection conn = DatabaseHelper.TaoKetNoi())
                 using (SqlCommand cmd = new SqlCommand("SELECT MaHangHoa, TenHangHoa FROM HangHoa", conn))
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
@@ -138,7 +134,7 @@ namespace N6_QLKHO
         {
             try
             {
-                using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
+                using (SqlConnection conn = DatabaseHelper.TaoKetNoi())
                 {
                     string sqlDon = @"SELECT d.MaDonHang, d.NgayDatHang, d.TenKhachHang, d.SoDienThoai, d.TrangThai, 
                                      ISNULL(SUM(c.SoLuongDat * c.DonGia), 0) AS TongTien 
@@ -242,7 +238,7 @@ namespace N6_QLKHO
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
+                using (SqlConnection conn = DatabaseHelper.TaoKetNoi())
                 {
                     conn.Open();
                     using (SqlTransaction tran = conn.BeginTransaction())
@@ -412,7 +408,7 @@ namespace N6_QLKHO
         private void LuuDonHang(string cheDo, string maDon, DateTime ngayDat, string tenKhach,
                                 string sdt, string trangThai, List<DongHang> dsDong)
         {
-            using (SqlConnection conn = new SqlConnection(chuoiKetNoi))
+            using (SqlConnection conn = DatabaseHelper.TaoKetNoi())
             {
                 conn.Open();
                 using (SqlTransaction tran = conn.BeginTransaction())
@@ -523,5 +519,3 @@ namespace N6_QLKHO
         }
     }
 }
-
-  

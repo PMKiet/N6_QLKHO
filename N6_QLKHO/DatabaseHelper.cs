@@ -76,5 +76,13 @@ namespace N6_QLKHO
             }
             return result;
         }
+
+        /// <summary>
+        /// Tạo SqlConnection mới (chưa mở) để các trang tự dùng khi cần transaction
+        /// </summary>
+        public static SqlConnection TaoKetNoi()
+        {
+            return new SqlConnection(connectionString);
+        }
     }
 }
