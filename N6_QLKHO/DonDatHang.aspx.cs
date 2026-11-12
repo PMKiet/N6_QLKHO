@@ -6,8 +6,7 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.Web.Script.Serialization;
 using System.Web.UI;
-using System.Web.UI.WebControls;
-
+using System.Web.UI.WebControls; 
 namespace N6_QLKHO
 {
     public partial class DonDatHang : System.Web.UI.Page

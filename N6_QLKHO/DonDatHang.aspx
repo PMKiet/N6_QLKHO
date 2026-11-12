@@ -197,7 +197,7 @@
                         </div>
                         <div class="col-12 col-md-4">
                             <label for="mdSdt" class="form-label small fw-semibold">Số điện thoại</label>
-                            <asp:TextBox ID="mdSdt" runat="server" CssClass="form-control" TextMode="Phone" />
+                            <asp:TextBox ID="mdSdt" runat="server" CssClass="form-control" TextMode="Number" />
                         </div>
                     </div>
 
@@ -492,6 +492,7 @@
             });
         }
     </script>
+
 
 
 </asp:Content>
