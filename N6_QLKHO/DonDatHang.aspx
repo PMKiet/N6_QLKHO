@@ -491,6 +491,39 @@
                 document.getElementById('ctTongCong').textContent = dinhDangTien(tong);
             });
         }
+
+        /* --- Kiểm tra bắt buộc nhập trước khi gửi form --- */
+        function kiemTraForm() {
+            function loi(noiDung, el) {
+                hienThongBao(noiDung, false);
+                if (el) el.focus();
+                return false;
+            }
+
+            var maDon = document.getElementById('<%= mdMaDon.ClientID %>');
+    var ngay = document.getElementById('<%= mdNgayDat.ClientID %>');
+    var khach = document.getElementById('<%= mdTenKhach.ClientID %>');
+    var sdt = document.getElementById('<%= mdSdt.ClientID %>');
+
+    if (!maDon.value.trim()) return loi('Mã đơn hàng không được để trống!', maDon);
+    if (!ngay.value) return loi('Ngày đặt không được để trống!', ngay);
+    if (!khach.value.trim()) return loi('Tên khách hàng không được để trống!', khach);
+    if (!sdt.value.trim()) return loi('Số điện thoại không được để trống!', sdt);
+    if (!/^\d{9,11}$/.test(sdt.value.trim())) return loi('Số điện thoại không hợp lệ (chỉ gồm 9–11 chữ số)!', sdt);
+
+    for (var i = 0; i < tbody.rows.length; i++) {
+        var tr = tbody.rows[i];
+        var select = tr.querySelector('select');
+        var sl = tr.querySelector('.inp-so-luong');
+        var gia = tr.querySelector('.inp-don-gia');
+        var dong = ' ở dòng ' + (i + 1) + '!';
+
+        if (!select.value) return loi('Vui lòng chọn hàng hóa' + dong, select);
+        if (!sl.value || parseInt(sl.value, 10) < 1) return loi('Số lượng phải từ 1 trở lên' + dong, sl);
+        if (gia.value === '' || parseFloat(gia.value) < 0) return loi('Đơn giá không được để trống' + dong, gia);
+    }
+    return true;
+}
     </script>
 
 
