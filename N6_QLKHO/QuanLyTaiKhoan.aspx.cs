@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
+using System.Web.UI;
 using System.Web.UI.WebControls;
 
 namespace N6_QLKHO
@@ -31,72 +33,11 @@ namespace N6_QLKHO
         // =====================================================================
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Cấu hình ô nhập liệu (SĐT chỉ nhập số, biểu tượng con mắt xem mật khẩu) - chạy ở mọi lần tải trang
-            CauHinhNhapLieu();
-
             // Chỉ nạp dữ liệu danh sách vào lần đầu tiên tải trang (tránh load lại khi bấm nút)
             if (!IsPostBack)
             {
                 LoadData();
             }
-        }
-
-        // =====================================================================
-        // 2.1. CẤU HÌNH Ô NHẬP LIỆU PHÍA TRÌNH DUYỆT
-        // =====================================================================
-        // - Ô Số điện thoại: chỉ cho gõ/dán chữ số, tối đa 11 số
-        // - Ô Mật khẩu: có biểu tượng con mắt nằm trong ô để hiện/ẩn mật khẩu
-        private void CauHinhNhapLieu()
-        {
-            // ---- Số điện thoại chỉ được nhập số ----
-            txtSDT.MaxLength = 11;
-            txtSDT.Attributes["inputmode"] = "numeric"; // Điện thoại sẽ hiện bàn phím số
-            // Chặn phím không phải số (48 = '0', 57 = '9')
-            txtSDT.Attributes["onkeypress"] = "return event.charCode >= 48 && event.charCode <= 57;";
-            // Xóa mọi ký tự không phải số (kể cả khi người dùng dán chuỗi có chữ vào)
-            txtSDT.Attributes["oninput"] = "this.value = this.value.replace(/\\D/g, '');";
-
-            // ---- Biểu tượng con mắt xem / ẩn mật khẩu ----
-            txtMatKhau.Attributes["autocomplete"] = "new-password";
-
-            string script = @"
-(function () {
-  var txt = document.getElementById('{ID}');
-  if (!txt || document.getElementById('btnXemMK')) return;
-
-  // Ẩn biểu tượng xem mật khẩu mặc định của trình duyệt Edge để không bị hiện 2 con mắt
-  var st = document.createElement('style');
-  st.textContent = '#{ID}::-ms-reveal{display:none;}';
-  document.head.appendChild(st);
-
-  var eyeOpen = ""<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>"";
-  var eyeOff  = ""<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24'/><line x1='1' y1='1' x2='23' y2='23'/></svg>"";
-
-  // Bọc ô mật khẩu trong một khung để đặt biểu tượng nằm bên phải, bên trong ô
-  var wrap = document.createElement('div');
-  wrap.style.position = 'relative';
-  txt.parentNode.insertBefore(wrap, txt);
-  wrap.appendChild(txt);
-  txt.style.paddingRight = '42px';
-
-  var btn = document.createElement('button');
-  btn.type = 'button';   // type=button: không gây postback
-  btn.id = 'btnXemMK';
-  btn.title = 'Hiện / ẩn mật khẩu';
-  btn.innerHTML = eyeOpen;
-  btn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);' +
-                      'border:0;background:transparent;padding:0;cursor:pointer;color:#6c757d;' +
-                      'display:flex;align-items:center;';
-  btn.onclick = function () {
-    if (txt.type === 'password') { txt.type = 'text'; btn.innerHTML = eyeOff; }
-    else { txt.type = 'password'; btn.innerHTML = eyeOpen; }
-  };
-  wrap.appendChild(btn);
-})();";
-
-            script = script.Replace("{ID}", txtMatKhau.ClientID);
-
-            ClientScript.RegisterStartupScript(this.GetType(), "XemMatKhau", script, true);
         }
 
         // =====================================================================
@@ -129,6 +70,47 @@ namespace N6_QLKHO
                 foreach (byte b in hash) sb.Append(b.ToString("x2"));
                 return sb.ToString();
             }
+        }
+
+        // =====================================================================
+        // 3.1. HÀM HỖ TRỢ MỞ / ĐÓNG FORM (MODAL) VÀ THÔNG BÁO
+        // =====================================================================
+        // Chạy script sau khi trang tải xong (kể cả thư viện Bootstrap nằm cuối trang)
+        private void ChayScriptSauKhiTaiTrang(string key, string js)
+        {
+            string script = "window.addEventListener('load', function () {" + js + "});";
+            ScriptManager.RegisterStartupScript(this, GetType(), key, script, true);
+        }
+
+        // Mở form (modal) theo id
+        private void MoModal(string modalId)
+        {
+            ChayScriptSauKhiTaiTrang("show_" + modalId,
+                "var el = document.getElementById('" + modalId + "');" +
+                "if (el && window.bootstrap) { new bootstrap.Modal(el).show(); }");
+        }
+
+        // Đóng form (modal) theo id - an toàn kể cả khi form chưa từng được mở
+        private void DongModal(string modalId)
+        {
+            ChayScriptSauKhiTaiTrang("hide_" + modalId,
+                "var el = document.getElementById('" + modalId + "');" +
+                "if (el && window.bootstrap) { var m = bootstrap.Modal.getInstance(el); if (m) { m.hide(); } }");
+        }
+
+        // Hiển thị thông báo trạng thái (thành công hoặc lỗi) ở đầu trang
+        private void ShowMessage(string text, bool ok)
+        {
+            lblThongBao.Text = Server.HtmlEncode(text);
+            lblThongBao.CssClass = "d-block mb-3 alert " + (ok ? "alert-success" : "alert-danger");
+            lblThongBao.Visible = true;
+        }
+
+        // Hiển thị lỗi ngay trong form và mở lại form để người dùng sửa tiếp
+        private void LoiTrongModal(Label lbl, string text, string modalId)
+        {
+            lbl.Text = Server.HtmlEncode(text);
+            MoModal(modalId);
         }
 
         // =====================================================================
@@ -260,20 +242,10 @@ namespace N6_QLKHO
             }
         }
 
-        // Hiển thị thông báo trạng thái (thành công hoặc lỗi) lên giao diện
-        private void ShowMessage(string text, bool ok)
+        // Xóa trắng các ô nhập liệu trong form thêm tài khoản
+        private void ClearFormThem()
         {
-            lblThongBao.Text = Server.HtmlEncode(text);
-            lblThongBao.CssClass = "nd-msg " + (ok ? "ok" : "err");
-            lblThongBao.Visible = true;
-        }
-
-        // Xóa trắng toàn bộ các ô nhập liệu trên form chi tiết
-        private void ClearForm()
-        {
-            hfMaGoc.Value = "";
             txtMaNV.Text = txtTenDN.Text = txtMatKhau.Text = txtHoTen.Text = txtSDT.Text = txtDiaChi.Text = "";
-            txtMaNV.Enabled = true; // Cho phép nhập lại mã khi chuyển sang chế độ thêm mới
             ddlChucVu.SelectedIndex = 0;
         }
 
@@ -285,22 +257,6 @@ namespace N6_QLKHO
         protected void btnTimKiem_Click(object sender, EventArgs e)
         {
             LoadData();
-        }
-
-        // Sự kiện bấm nút Thêm tài khoản (mở form nhập liệu mới)
-        protected void btnThem_Click(object sender, EventArgs e)
-        {
-            ClearForm();
-            lblTieuDeForm.Text = "Thêm tài khoản";
-            lblMatKhau.Text = "Mật khẩu";
-            pnlForm.Visible = true;
-        }
-
-        // Sự kiện bấm nút Hủy (đóng form nhập liệu)
-        protected void btnHuy_Click(object sender, EventArgs e)
-        {
-            ClearForm();
-            pnlForm.Visible = false;
         }
 
         // Sự kiện điều hướng các thao tác trên từng dòng của GridView (Sửa, Xóa, Đặt lại mật khẩu)
@@ -322,44 +278,152 @@ namespace N6_QLKHO
         }
 
         // =====================================================================
-        // 8. CHỨC NĂNG SỬA TÀI KHOẢN (UPDATE - LOAD DATA TO FORM)
+        // 8. CHỨC NĂNG SỬA TÀI KHOẢN (BẤM ICON BÚT XANH -> MỞ FORM SỬA)
         // =====================================================================
-        // Đọc thông tin chi tiết của 1 tài khoản đổ lên form để người dùng chỉnh sửa
+        // Đọc thông tin tài khoản từ CSDL đổ vào form sửa. Trả về false nếu tài khoản không còn tồn tại.
+        private bool NapDuLieuFormSua(string ma)
+        {
+            DataTable dt = DatabaseHelper.ExecuteQuery(
+                "SELECT TenDangNhap, HoTen, SoDienThoai, DiaChi, ChucVu FROM NguoiDung WHERE MaNhanVien = @ma",
+                new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
+
+            if (dt.Rows.Count == 0) return false;
+
+            DataRow r = dt.Rows[0];
+            hfMaGoc.Value = ma;
+            txtSuaMaNV.Text = ma;
+            txtSuaTenDN.Text = Convert.ToString(r["TenDangNhap"]);
+            txtSuaMatKhau.Text = ""; // Để trống (không nhập nghĩa là giữ nguyên mật khẩu cũ)
+            txtSuaHoTen.Text = Convert.ToString(r["HoTen"]);
+            txtSuaSDT.Text = Convert.ToString(r["SoDienThoai"]);
+            txtSuaDiaChi.Text = Convert.ToString(r["DiaChi"]);
+
+            string cv = Convert.ToString(r["ChucVu"]);
+            ddlSuaChucVu.SelectedValue = ddlSuaChucVu.Items.FindByValue(cv) != null ? cv : ChucVuNhanVien;
+            return true;
+        }
+
+        // Mở form sửa với dữ liệu của tài khoản được chọn
         private void MoFormSua(string ma)
         {
             try
             {
-                DataTable dt = DatabaseHelper.ExecuteQuery(
-                    "SELECT TenDangNhap, HoTen, SoDienThoai, DiaChi, ChucVu FROM NguoiDung WHERE MaNhanVien = @ma",
-                    new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
-
-                if (dt.Rows.Count == 0)
+                if (!NapDuLieuFormSua(ma))
                 {
                     ShowMessage("Tài khoản " + ma + " không còn tồn tại (có thể đã bị xoá).", false);
                     LoadData();
                     return;
                 }
 
-                DataRow r = dt.Rows[0];
-                hfMaGoc.Value = ma;
-                txtMaNV.Text = ma;
-                txtMaNV.Enabled = false; // Khóa ô Mã nhân viên không cho sửa khóa chính
-                txtTenDN.Text = Convert.ToString(r["TenDangNhap"]);
-                txtMatKhau.Text = "";    // Để trống mật khẩu (nếu không nhập nghĩa là giữ nguyên mật khẩu cũ)
-                txtHoTen.Text = Convert.ToString(r["HoTen"]);
-                txtSDT.Text = Convert.ToString(r["SoDienThoai"]);
-                txtDiaChi.Text = Convert.ToString(r["DiaChi"]);
-
-                string cv = Convert.ToString(r["ChucVu"]);
-                ddlChucVu.SelectedValue = ddlChucVu.Items.FindByValue(cv) != null ? cv : ChucVuNhanVien;
-
-                lblTieuDeForm.Text = "Sửa tài khoản " + ma;
-                lblMatKhau.Text = "Mật khẩu mới (bỏ trống nếu không đổi)";
-                pnlForm.Visible = true;
+                MoModal("modalSuaTK");
             }
             catch (Exception ex)
             {
                 ShowMessage(DescribeError(ex, "mở thông tin tài khoản"), false);
+            }
+        }
+
+        // Nút Làm mới trong form sửa: nạp lại dữ liệu gốc từ CSDL
+        protected void btnLamMoiSua_Click(object sender, EventArgs e)
+        {
+            string ma = hfMaGoc.Value;
+            try
+            {
+                if (!NapDuLieuFormSua(ma))
+                {
+                    DongModal("modalSuaTK");
+                    ShowMessage("Tài khoản " + ma + " không còn tồn tại (có thể đã bị xoá).", false);
+                    LoadData();
+                    return;
+                }
+
+                MoModal("modalSuaTK"); // Giữ form mở để tiếp tục chỉnh sửa
+            }
+            catch (Exception ex)
+            {
+                LoiTrongModal(lblLoiSua, DescribeError(ex, "làm mới thông tin tài khoản"), "modalSuaTK");
+            }
+        }
+
+        // Nút Lưu Thay Đổi trong form sửa
+        protected void btnLuuSua_Click(object sender, EventArgs e)
+        {
+            string ma = hfMaGoc.Value;
+            string tenDN = txtSuaTenDN.Text.Trim();
+            string mk = txtSuaMatKhau.Text;
+            string hoTen = txtSuaHoTen.Text.Trim();
+            string sdt = txtSuaSDT.Text.Trim();
+            string diaChi = txtSuaDiaChi.Text.Trim();
+            string chucVu = ddlSuaChucVu.SelectedValue;
+
+            if (ma.Length == 0)
+            {
+                ShowMessage("Không xác định được tài khoản cần cập nhật.", false);
+                return;
+            }
+
+            // Bước kiểm tra định dạng dữ liệu đầu vào
+            string loi = ValidateInput(true, ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
+            if (loi != null)
+            {
+                LoiTrongModal(lblLoiSua, loi, "modalSuaTK");
+                return;
+            }
+
+            try
+            {
+                // Kiểm tra trùng lặp tên đăng nhập với các tài khoản khác
+                int trungTen = Count(
+                    "SELECT COUNT(*) FROM NguoiDung WHERE TenDangNhap = @tdn AND MaNhanVien <> @ma",
+                    P("@tdn", SqlDbType.VarChar, 50, tenDN), P("@ma", SqlDbType.VarChar, 10, ma));
+                if (trungTen > 0)
+                {
+                    LoiTrongModal(lblLoiSua, "Tên đăng nhập \"" + tenDN + "\" đã tồn tại.", "modalSuaTK");
+                    return;
+                }
+
+                // Ràng buộc an toàn: Không cho phép hạ chức vụ nếu đó là tài khoản Quản lý duy nhất còn lại
+                if (chucVu != ChucVuQuanLy)
+                {
+                    DataTable cu = DatabaseHelper.ExecuteQuery(
+                        "SELECT ChucVu FROM NguoiDung WHERE MaNhanVien = @ma",
+                        new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
+
+                    if (cu.Rows.Count > 0 && Convert.ToString(cu.Rows[0]["ChucVu"]) == ChucVuQuanLy &&
+                        Count("SELECT COUNT(*) FROM NguoiDung WHERE ChucVu = @cv", P("@cv", SqlDbType.NVarChar, 50, ChucVuQuanLy)) <= 1)
+                    {
+                        LoiTrongModal(lblLoiSua, "Không thể đổi chức vụ: hệ thống phải còn ít nhất một tài khoản Quản lý.", "modalSuaTK");
+                        return;
+                    }
+                }
+
+                // Xây dựng câu lệnh SQL cập nhật (nếu có nhập mật khẩu mới thì cập nhật luôn mật khẩu, ngược lại giữ nguyên)
+                string sql = "UPDATE NguoiDung SET TenDangNhap=@tdn, HoTen=@ht, SoDienThoai=@sdt, DiaChi=@dc, ChucVu=@cv"
+                           + (mk.Length > 0 ? ", MatKhau=@mk" : "") + " WHERE MaNhanVien=@ma";
+
+                var ps = new List<SqlParameter>
+                {
+                    P("@tdn", SqlDbType.VarChar, 50, tenDN),
+                    P("@ht", SqlDbType.NVarChar, 100, hoTen),
+                    P("@sdt", SqlDbType.VarChar, 15, sdt),
+                    P("@dc", SqlDbType.NVarChar, 255, diaChi),
+                    P("@cv", SqlDbType.NVarChar, 50, chucVu),
+                    P("@ma", SqlDbType.VarChar, 10, ma)
+                };
+                if (mk.Length > 0) ps.Add(P("@mk", SqlDbType.VarChar, 255, Md5(mk)));
+
+                int n = DatabaseHelper.ExecuteNonQuery(sql, ps.ToArray());
+
+                LoadData();
+                DongModal("modalSuaTK");
+                if (n == 0)
+                    ShowMessage("Tài khoản " + ma + " không còn tồn tại nên không thể cập nhật.", false);
+                else
+                    ShowMessage("Đã cập nhật tài khoản " + ma + ".", true);
+            }
+            catch (Exception ex)
+            {
+                LoiTrongModal(lblLoiSua, DescribeError(ex, "cập nhật tài khoản"), "modalSuaTK");
             }
         }
 
@@ -446,13 +510,12 @@ namespace N6_QLKHO
         }
 
         // =====================================================================
-        // 11. CHỨC NĂNG LƯU DỮ LIỆU (SAVE / INSERT OR UPDATE)
+        // 11. CHỨC NĂNG THÊM TÀI KHOẢN MỚI
         // =====================================================================
-        // Sự kiện bấm nút Lưu (kiểm tra phân nhánh tự động gọi Thêm mới hoặc Cập nhật)
+        // Nút Lưu Tài Khoản trong form thêm
         protected void btnLuu_Click(object sender, EventArgs e)
         {
-            bool isEdit = hfMaGoc.Value.Length > 0; // Nếu HiddenField có giá trị nghĩa là đang ở chế độ Sửa
-            string ma = isEdit ? hfMaGoc.Value : txtMaNV.Text.Trim();
+            string ma = txtMaNV.Text.Trim();
             string tenDN = txtTenDN.Text.Trim();
             string mk = txtMatKhau.Text;
             string hoTen = txtHoTen.Text.Trim();
@@ -461,115 +524,51 @@ namespace N6_QLKHO
             string chucVu = ddlChucVu.SelectedValue;
 
             // Bước kiểm tra định dạng dữ liệu đầu vào
-            string loi = ValidateInput(isEdit, ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
+            string loi = ValidateInput(false, ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
             if (loi != null)
             {
-                ShowMessage(loi, false);
+                LoiTrongModal(lblLoiThem, loi, "modalThemTK");
                 return;
             }
 
             try
             {
-                // Kiểm tra trùng lặp tên đăng nhập với các tài khoản khác
-                int trungTen = Count(
-                    "SELECT COUNT(*) FROM NguoiDung WHERE TenDangNhap = @tdn AND MaNhanVien <> @ma",
-                    P("@tdn", SqlDbType.VarChar, 50, tenDN), P("@ma", SqlDbType.VarChar, 10, ma));
-                if (trungTen > 0)
+                // Kiểm tra trùng Mã nhân viên
+                if (Count("SELECT COUNT(*) FROM NguoiDung WHERE MaNhanVien = @ma", P("@ma", SqlDbType.VarChar, 10, ma)) > 0)
                 {
-                    ShowMessage("Tên đăng nhập \"" + tenDN + "\" đã tồn tại.", false);
+                    LoiTrongModal(lblLoiThem, "Mã nhân viên \"" + ma + "\" đã tồn tại.", "modalThemTK");
                     return;
                 }
 
-                // Phân nhánh thực thi: Sửa hoặc Thêm mới
-                if (isEdit)
-                    CapNhat(ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
-                else
-                    ThemMoi(ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
+                // Kiểm tra trùng Tên đăng nhập
+                if (Count("SELECT COUNT(*) FROM NguoiDung WHERE TenDangNhap = @tdn", P("@tdn", SqlDbType.VarChar, 50, tenDN)) > 0)
+                {
+                    LoiTrongModal(lblLoiThem, "Tên đăng nhập \"" + tenDN + "\" đã tồn tại.", "modalThemTK");
+                    return;
+                }
+
+                DatabaseHelper.ExecuteNonQuery(
+                    "INSERT INTO NguoiDung (MaNhanVien, TenDangNhap, MatKhau, HoTen, SoDienThoai, DiaChi, ChucVu) " +
+                    "VALUES (@ma, @tdn, @mk, @ht, @sdt, @dc, @cv)",
+                    new SqlParameter[] {
+                        P("@ma", SqlDbType.VarChar, 10, ma),
+                        P("@tdn", SqlDbType.VarChar, 50, tenDN),
+                        P("@mk", SqlDbType.VarChar, 255, Md5(mk)),
+                        P("@ht", SqlDbType.NVarChar, 100, hoTen),
+                        P("@sdt", SqlDbType.VarChar, 15, sdt),
+                        P("@dc", SqlDbType.NVarChar, 255, diaChi),
+                        P("@cv", SqlDbType.NVarChar, 50, chucVu)
+                    });
+
+                ClearFormThem();
+                LoadData();
+                DongModal("modalThemTK");
+                ShowMessage("Đã thêm tài khoản " + ma + ".", true);
             }
             catch (Exception ex)
             {
-                ShowMessage(DescribeError(ex, isEdit ? "cập nhật tài khoản" : "thêm tài khoản"), false);
+                LoiTrongModal(lblLoiThem, DescribeError(ex, "thêm tài khoản"), "modalThemTK");
             }
-        }
-
-        // Thực hiện thêm mới tài khoản vào cơ sở dữ liệu
-        private void ThemMoi(string ma, string tenDN, string mk, string hoTen, string sdt, string diaChi, string chucVu)
-        {
-            // Kiểm tra xem Mã nhân viên đã tồn tại chưa trước khi thêm
-            if (Count("SELECT COUNT(*) FROM NguoiDung WHERE MaNhanVien = @ma", P("@ma", SqlDbType.VarChar, 10, ma)) > 0)
-            {
-                ShowMessage("Mã nhân viên \"" + ma + "\" đã tồn tại.", false);
-                return;
-            }
-
-            DatabaseHelper.ExecuteNonQuery(
-                "INSERT INTO NguoiDung (MaNhanVien, TenDangNhap, MatKhau, HoTen, SoDienThoai, DiaChi, ChucVu) " +
-                "VALUES (@ma, @tdn, @mk, @ht, @sdt, @dc, @cv)",
-                new SqlParameter[] {
-                    P("@ma", SqlDbType.VarChar, 10, ma),
-                    P("@tdn", SqlDbType.VarChar, 50, tenDN),
-                    P("@mk", SqlDbType.VarChar, 255, Md5(mk)),
-                    P("@ht", SqlDbType.NVarChar, 100, hoTen),
-                    P("@sdt", SqlDbType.VarChar, 15, sdt),
-                    P("@dc", SqlDbType.NVarChar, 255, diaChi),
-                    P("@cv", SqlDbType.NVarChar, 50, chucVu)
-                });
-
-            ShowMessage("Đã thêm tài khoản " + ma + ".", true);
-            HoanTatLuu();
-        }
-
-        // Thực hiện cập nhật thông tin tài khoản trong cơ sở dữ liệu
-        private void CapNhat(string ma, string tenDN, string mk, string hoTen, string sdt, string diaChi, string chucVu)
-        {
-            // Ràng buộc an toàn: Không cho phép hạ chức vụ nếu đó là tài khoản Quản lý duy nhất còn lại
-            if (chucVu != ChucVuQuanLy)
-            {
-                DataTable cu = DatabaseHelper.ExecuteQuery(
-                    "SELECT ChucVu FROM NguoiDung WHERE MaNhanVien = @ma",
-                    new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
-
-                if (cu.Rows.Count > 0 && Convert.ToString(cu.Rows[0]["ChucVu"]) == ChucVuQuanLy &&
-                    Count("SELECT COUNT(*) FROM NguoiDung WHERE ChucVu = @cv", P("@cv", SqlDbType.NVarChar, 50, ChucVuQuanLy)) <= 1)
-                {
-                    ShowMessage("Không thể đổi chức vụ: hệ thống phải còn ít nhất một tài khoản Quản lý.", false);
-                    return;
-                }
-            }
-
-            // Xây dựng câu lệnh SQL cập nhật (nếu có nhập mật khẩu mới thì cập nhật luôn mật khẩu, ngược lại giữ nguyên)
-            string sql = "UPDATE NguoiDung SET TenDangNhap=@tdn, HoTen=@ht, SoDienThoai=@sdt, DiaChi=@dc, ChucVu=@cv"
-                       + (mk.Length > 0 ? ", MatKhau=@mk" : "") + " WHERE MaNhanVien=@ma";
-
-            var ps = new List<SqlParameter>
-            {
-                P("@tdn", SqlDbType.VarChar, 50, tenDN),
-                P("@ht", SqlDbType.NVarChar, 100, hoTen),
-                P("@sdt", SqlDbType.VarChar, 15, sdt),
-                P("@dc", SqlDbType.NVarChar, 255, diaChi),
-                P("@cv", SqlDbType.NVarChar, 50, chucVu),
-                P("@ma", SqlDbType.VarChar, 10, ma)
-            };
-            if (mk.Length > 0) ps.Add(P("@mk", SqlDbType.VarChar, 255, Md5(mk)));
-
-            int n = DatabaseHelper.ExecuteNonQuery(sql, ps.ToArray());
-            if (n == 0)
-            {
-                ShowMessage("Tài khoản " + ma + " không còn tồn tại nên không thể cập nhật.", false);
-                LoadData();
-                return;
-            }
-
-            ShowMessage("Đã cập nhật tài khoản " + ma + ".", true);
-            HoanTatLuu();
-        }
-
-        // Hoàn tất quá trình lưu: xóa form, ẩn panel chi tiết và tải lại danh sách
-        private void HoanTatLuu()
-        {
-            ClearForm();
-            pnlForm.Visible = false;
-            LoadData();
         }
     }
 }
