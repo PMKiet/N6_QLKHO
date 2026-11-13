@@ -376,3 +376,131 @@ namespace N6_QLKHO
                 ShowMessage(DescribeError(ex, "xoá tài khoản"), false);
             }
         }
+        // =====================================================================
+        // 11. CHỨC NĂNG LƯU DỮ LIỆU (SAVE / INSERT OR UPDATE)
+        // =====================================================================
+        // Sự kiện bấm nút Lưu (kiểm tra phân nhánh tự động gọi Thêm mới hoặc Cập nhật)
+        protected void btnLuu_Click(object sender, EventArgs e)
+        {
+            bool isEdit = hfMaGoc.Value.Length > 0; // Nếu HiddenField có giá trị nghĩa là đang ở chế độ Sửa
+            string ma = isEdit ? hfMaGoc.Value : txtMaNV.Text.Trim();
+            string tenDN = txtTenDN.Text.Trim();
+            string mk = txtMatKhau.Text;
+            string hoTen = txtHoTen.Text.Trim();
+            string sdt = txtSDT.Text.Trim();
+            string diaChi = txtDiaChi.Text.Trim();
+            string chucVu = ddlChucVu.SelectedValue;
+
+            // Bước kiểm tra định dạng dữ liệu đầu vào
+            string loi = ValidateInput(isEdit, ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
+            if (loi != null)
+            {
+                ShowMessage(loi, false);
+                return;
+            }
+
+            try
+            {
+                // Kiểm tra trùng lặp tên đăng nhập với các tài khoản khác
+                int trungTen = Count(
+                    "SELECT COUNT(*) FROM NguoiDung WHERE TenDangNhap = @tdn AND MaNhanVien <> @ma",
+                    P("@tdn", SqlDbType.VarChar, 50, tenDN), P("@ma", SqlDbType.VarChar, 10, ma));
+                if (trungTen > 0)
+                {
+                    ShowMessage("Tên đăng nhập \"" + tenDN + "\" đã tồn tại.", false);
+                    return;
+                }
+
+                // Phân nhánh thực thi: Sửa hoặc Thêm mới
+                if (isEdit)
+                    CapNhat(ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
+                else
+                    ThemMoi(ma, tenDN, mk, hoTen, sdt, diaChi, chucVu);
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(DescribeError(ex, isEdit ? "cập nhật tài khoản" : "thêm tài khoản"), false);
+            }
+        }
+
+        // Thực hiện thêm mới tài khoản vào cơ sở dữ liệu
+        private void ThemMoi(string ma, string tenDN, string mk, string hoTen, string sdt, string diaChi, string chucVu)
+        {
+            // Kiểm tra xem Mã nhân viên đã tồn tại chưa trước khi thêm
+            if (Count("SELECT COUNT(*) FROM NguoiDung WHERE MaNhanVien = @ma", P("@ma", SqlDbType.VarChar, 10, ma)) > 0)
+            {
+                ShowMessage("Mã nhân viên \"" + ma + "\" đã tồn tại.", false);
+                return;
+            }
+
+            DatabaseHelper.ExecuteNonQuery(
+                "INSERT INTO NguoiDung (MaNhanVien, TenDangNhap, MatKhau, HoTen, SoDienThoai, DiaChi, ChucVu) " +
+                "VALUES (@ma, @tdn, @mk, @ht, @sdt, @dc, @cv)",
+                new SqlParameter[] {
+                    P("@ma", SqlDbType.VarChar, 10, ma),
+                    P("@tdn", SqlDbType.VarChar, 50, tenDN),
+                    P("@mk", SqlDbType.VarChar, 255, Md5(mk)),
+                    P("@ht", SqlDbType.NVarChar, 100, hoTen),
+                    P("@sdt", SqlDbType.VarChar, 15, sdt),
+                    P("@dc", SqlDbType.NVarChar, 255, diaChi),
+                    P("@cv", SqlDbType.NVarChar, 50, chucVu)
+                });
+
+            ShowMessage("Đã thêm tài khoản " + ma + ".", true);
+            HoanTatLuu();
+        }
+
+        // Thực hiện cập nhật thông tin tài khoản trong cơ sở dữ liệu
+        private void CapNhat(string ma, string tenDN, string mk, string hoTen, string sdt, string diaChi, string chucVu)
+        {
+            // Ràng buộc an toàn: Không cho phép hạ chức vụ nếu đó là tài khoản Quản lý duy nhất còn lại
+            if (chucVu != ChucVuQuanLy)
+            {
+                DataTable cu = DatabaseHelper.ExecuteQuery(
+                    "SELECT ChucVu FROM NguoiDung WHERE MaNhanVien = @ma", 
+                    new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
+
+                if (cu.Rows.Count > 0 && Convert.ToString(cu.Rows[0]["ChucVu"]) == ChucVuQuanLy &&
+                    Count("SELECT COUNT(*) FROM NguoiDung WHERE ChucVu = @cv", P("@cv", SqlDbType.NVarChar, 50, ChucVuQuanLy)) <= 1)
+                {
+                    ShowMessage("Không thể đổi chức vụ: hệ thống phải còn ít nhất một tài khoản Quản lý.", false);
+                    return;
+                }
+            }
+
+            // Xây dựng câu lệnh SQL cập nhật (nếu có nhập mật khẩu mới thì cập nhật luôn mật khẩu, ngược lại giữ nguyên)
+            string sql = "UPDATE NguoiDung SET TenDangNhap=@tdn, HoTen=@ht, SoDienThoai=@sdt, DiaChi=@dc, ChucVu=@cv"
+                       + (mk.Length > 0 ? ", MatKhau=@mk" : "") + " WHERE MaNhanVien=@ma";
+
+            var ps = new List<SqlParameter>
+            {
+                P("@tdn", SqlDbType.VarChar, 50, tenDN),
+                P("@ht", SqlDbType.NVarChar, 100, hoTen),
+                P("@sdt", SqlDbType.VarChar, 15, sdt),
+                P("@dc", SqlDbType.NVarChar, 255, diaChi),
+                P("@cv", SqlDbType.NVarChar, 50, chucVu),
+                P("@ma", SqlDbType.VarChar, 10, ma)
+            };
+            if (mk.Length > 0) ps.Add(P("@mk", SqlDbType.VarChar, 255, Md5(mk)));
+
+            int n = DatabaseHelper.ExecuteNonQuery(sql, ps.ToArray());
+            if (n == 0)
+            {
+                ShowMessage("Tài khoản " + ma + " không còn tồn tại nên không thể cập nhật.", false);
+                LoadData();
+                return;
+            }
+
+            ShowMessage("Đã cập nhật tài khoản " + ma + ".", true);
+            HoanTatLuu();
+        }
+
+        // Hoàn tất quá trình lưu: xóa form, ẩn panel chi tiết và tải lại danh sách
+        private void HoanTatLuu()
+        {
+            ClearForm();
+            pnlForm.Visible = false;
+            LoadData();
+        }
+    }
+}
