@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Lập Phiếu Nhập Kho" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="PhieuNhap.aspx.cs" Inherits="N6_QLKHO.PhieuNhap" %>
+<%@ Page Title="Lập Phiếu Nhập Kho" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="PhieuNhap.aspx.cs" Inherits="N6_QLKHO.PhieuNhap" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style>
@@ -33,14 +33,26 @@
         .add-row-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; }
         .form-control.is-invalid, .form-select.is-invalid { background-image: none; }
         .btn[disabled] { cursor: not-allowed; }
-        @media print { .no-print { display: none !important; } }
+        @media print {
+            body * { visibility: hidden; }
+            #vungInPhieuNhap, #vungInPhieuNhap * { visibility: visible; }
+            #vungInPhieuNhap {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .no-print { display: none !important; }
+        }
     </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
 
     <!-- Tiêu đề trang -->
-    <div class="d-flex align-items-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3 mb-4 no-print">
         <div class="page-icon bg-success bg-opacity-10 text-success"><i class="fa-solid fa-file-arrow-down"></i></div>
         <div>
             <h3 class="fw-bold text-dark mb-1">Lập Phiếu Nhập Kho</h3>
@@ -49,8 +61,8 @@
     </div>
 
     <!-- Thông báo từ server (thành công / lỗi) và từ trình duyệt (kiểm tra nhanh) -->
-    <asp:Label ID="lblThongBao" runat="server" CssClass="d-block" EnableViewState="false"></asp:Label>
-    <div id="clientErr"></div>
+    <asp:Label ID="lblThongBao" runat="server" CssClass="d-block no-print" EnableViewState="false"></asp:Label>
+    <div id="clientErr" class="no-print"></div>
 
     <!-- ===== BƯỚC 1: NHẬP THÔNG TIN ===== -->
     <asp:Panel ID="pnlNhapLieu" runat="server">
@@ -186,26 +198,55 @@
 
     <!-- ===== BƯỚC 2: XEM TRƯỚC VÀ XÁC NHẬN ===== -->
     <asp:Panel ID="pnlXemTruoc" runat="server" Style="display:none">
-        <div class="alert alert-info d-flex align-items-center mb-4 no-print" role="alert">
-            <i class="fa-solid fa-eye me-2"></i>
-            <div>Đây là bản <strong>xem trước</strong>. Phiếu chỉ được lưu và cập nhật tồn kho khi bạn bấm <strong>Xác nhận lập phiếu</strong>.</div>
+        <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 no-print" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fa-solid fa-eye me-2"></i>
+                <div>Đây là bản <strong>xem trước</strong>. Bạn có thể xuất file kiểm tra trước hoặc bấm <strong>Xác nhận lập phiếu</strong> để lưu vào hệ thống.</div>
+            </div>
+            <!-- Nhóm nút xuất file -->
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-danger btn-sm fw-semibold" onclick="window.print();">
+                    <i class="fa-solid fa-file-pdf me-1"></i> In / Xuất PDF
+                </button>
+                <asp:LinkButton ID="btnXuatExcel" runat="server" CssClass="btn btn-outline-success btn-sm fw-semibold" OnClick="btnXuatExcel_Click" CausesValidation="false">
+                    <i class="fa-solid fa-file-excel me-1"></i> Xuất Excel
+                </asp:LinkButton>
+                <asp:LinkButton ID="btnXuatWord" runat="server" CssClass="btn btn-outline-primary btn-sm fw-semibold" OnClick="btnXuatWord_Click" CausesValidation="false">
+                    <i class="fa-solid fa-file-word me-1"></i> Xuất Word
+                </asp:LinkButton>
+            </div>
         </div>
 
-        <div class="card page-header-card shadow-sm mb-4">
-            <div class="card-header bg-transparent py-3 border-0">
-                <h5 class="section-title text-success"><i class="fa-solid fa-file-arrow-down me-2"></i> Phiếu Nhập Kho</h5>
-            </div>
-            <div class="card-body px-4 pb-4 pt-0">
-                <asp:Literal ID="litThongTinXemTruoc" runat="server"></asp:Literal>
-            </div>
-        </div>
+        <!-- Vùng nội dung phiếu chuẩn để xem trước & In/PDF -->
+        <div id="vungInPhieuNhap" class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
+            <div class="card-body p-4 p-md-5">
+                <!-- Tiêu đề mẫu phiếu chuẩn -->
+                <div class="row border-bottom pb-3 mb-4 align-items-center">
+                    <div class="col-7">
+                        <div class="fw-bold text-uppercase text-success fs-6">HỆ THỐNG QUẢN LÝ KHO VẬT TƯ (N6_QLKHO)</div>
+                        <div class="text-muted small">Bộ phận Kho vận &amp; Cung ứng</div>
+                    </div>
+                    <div class="col-5 text-end">
+                        <div class="fw-bold small">Mẫu số: 01 - VT</div>
+                        <div class="text-muted small">Ngày in: <%= DateTime.Now.ToString("dd/MM/yyyy HH:mm") %></div>
+                    </div>
+                </div>
 
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-            <div class="card-body px-4 py-4">
+                <div class="text-center mb-4">
+                    <h4 class="fw-bold text-uppercase text-dark mb-1">PHIẾU NHẬP KHO</h4>
+                    <div class="text-muted small">Số phiếu: <strong><asp:Literal ID="litMaPhieuHeader" runat="server"></asp:Literal></strong></div>
+                </div>
+
+                <!-- Thông tin chung -->
+                <div class="bg-light rounded-3 p-3 mb-4 border">
+                    <asp:Literal ID="litThongTinXemTruoc" runat="server"></asp:Literal>
+                </div>
+
+                <!-- Bảng chi tiết hàng hóa -->
                 <div class="table-responsive">
-                    <asp:GridView ID="gvXemTruoc" runat="server" CssClass="table table-custom table-hover mb-0 align-middle" AutoGenerateColumns="false" GridLines="None">
+                    <asp:GridView ID="gvXemTruoc" runat="server" CssClass="table table-bordered table-custom mb-0 align-middle" AutoGenerateColumns="false" GridLines="None">
                         <Columns>
-                            <asp:TemplateField HeaderText="STT">
+                            <asp:TemplateField HeaderText="STT" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center">
                                 <ItemTemplate><%# Container.DataItemIndex + 1 %></ItemTemplate>
                             </asp:TemplateField>
                             <asp:BoundField DataField="MaHangHoa" HeaderText="Mã Hàng" />
@@ -217,9 +258,28 @@
                         </Columns>
                     </asp:GridView>
                 </div>
+
+                <!-- Tổng cộng -->
                 <div class="d-flex justify-content-end align-items-center gap-3 mt-3 pt-3 border-top">
-                    <span class="text-secondary fw-semibold">Tổng tiền phiếu:</span>
+                    <span class="text-secondary fw-semibold">Tổng tiền thanh toán:</span>
                     <span class="fs-4 fw-bold text-success"><asp:Literal ID="litTongTienXemTruoc" runat="server"></asp:Literal></span>
+                </div>
+
+                <!-- Khu vực ký tên -->
+                <div class="row text-center mt-5 pt-3">
+                    <div class="col-4">
+                        <div class="fw-bold small">Người lập phiếu</div>
+                        <div class="text-muted fst-italic small">(Ký, họ tên)</div>
+                        <div class="mt-5 fw-semibold small"><asp:Literal ID="litChuKyNguoiLap" runat="server"></asp:Literal></div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold small">Người giao hàng</div>
+                        <div class="text-muted fst-italic small">(Ký, họ tên)</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="fw-bold small">Thủ kho / Kế toán</div>
+                        <div class="text-muted fst-italic small">(Ký, họ tên)</div>
+                    </div>
                 </div>
             </div>
         </div>
