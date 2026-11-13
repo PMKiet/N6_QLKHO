@@ -115,3 +115,48 @@ namespace N6_QLKHO
 
             return "Đã xảy ra lỗi không mong muốn khi " + hanhDong + ". Vui lòng thử lại.";
         }
+        // =====================================================================
+        // 5. KIỂM TRA TÍNH HỢP LỆ DỮ LIỆU ĐẦU VÀO (VALIDATION)
+        // =====================================================================
+        // Kiểm tra toàn bộ thông tin trên form trước khi thực hiện thêm mới hoặc cập nhật
+        private string ValidateInput(bool isEdit, string ma, string tenDN, string mk,
+                                   string hoTen, string sdt, string diaChi, string chucVu)
+        {
+            // Kiểm tra các trường bắt buộc không được bỏ trống
+            if (ma.Length == 0 || tenDN.Length == 0 || hoTen.Length == 0 || sdt.Length == 0 || diaChi.Length == 0)
+                return "Vui lòng nhập đầy đủ thông tin.";
+
+            // Kiểm tra định dạng Mã nhân viên bằng Regex
+            if (!RegexMa.IsMatch(ma))
+                return "Mã nhân viên chỉ gồm chữ, số hoặc dấu gạch dưới, tối đa 10 ký tự.";
+
+            // Kiểm tra định dạng Tên đăng nhập bằng Regex
+            if (!RegexTenDN.IsMatch(tenDN))
+                return "Tên đăng nhập gồm 3 đến 50 ký tự, chỉ dùng chữ không dấu, số, dấu chấm hoặc gạch dưới.";
+
+            // Khi thêm mới thì mật khẩu không được để trống
+            if (!isEdit && mk.Length == 0)
+                return "Vui lòng nhập mật khẩu.";
+
+            // Kiểm tra độ dài mật khẩu nếu có nhập
+            if (mk.Length > 0 && (mk.Length < 6 || mk.Length > 50))
+                return "Mật khẩu phải từ 6 đến 50 ký tự.";
+
+            // Kiểm tra độ dài họ tên tối đa
+            if (hoTen.Length > 100)
+                return "Họ tên tối đa 100 ký tự.";
+
+            // Kiểm tra tính hợp lệ của Số điện thoại (bắt buộc bắt đầu bằng 0, chỉ chứa số)
+            if (!RegexSDT.IsMatch(sdt))
+                return "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 hoặc 11 chữ số (không chứa chữ cái).";
+
+            // Kiểm tra độ dài địa chỉ tối đa
+            if (diaChi.Length > 255)
+                return "Địa chỉ tối đa 255 ký tự.";
+
+            // Kiểm tra giá trị chức vụ hợp lệ
+            if (chucVu != ChucVuQuanLy && chucVu != ChucVuNhanVien)
+                return "Chức vụ không hợp lệ.";
+
+            return null; // Trả về null nghĩa là dữ liệu hoàn toàn hợp lệ
+        }
