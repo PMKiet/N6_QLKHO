@@ -28,3 +28,44 @@ namespace N6_QLKHO
                 BindGrid();
             }
         }
+        // =====================================================================
+        // 3. CÁC HÀM TIỆN ÍCH HỖ TRỢ GIAO DIỆN & MODAL (UI HELPERS)
+        // =====================================================================
+
+        // Thiết lập thuộc tính giới hạn chỉ cho nhập số, bật bàn phím số trên mobile và chống dán chữ cho ô điện thoại
+        private void CauHinhSoDienThoai()
+        {
+            TextBox[] cacOSdt = { txtSoDienThoai, txtSuaSoDienThoai };
+            foreach (TextBox tb in cacOSdt)
+            {
+                tb.MaxLength = 11;
+                tb.Attributes["inputmode"] = "numeric"; // Hiển thị bàn phím số trên thiết bị di động
+                // Chặn gõ các ký tự không phải số từ bàn phím (mã ASCII từ 48 đến 57 tương ứng từ '0' đến '9')
+                tb.Attributes["onkeypress"] = "return event.charCode >= 48 && event.charCode <= 57;";
+                // Tự động xóa sạch các ký tự không phải số ngay khi người dùng thao tác dán (paste) dữ liệu vào
+                tb.Attributes["oninput"] = "this.value = this.value.replace(/\\D/g, '');";
+            }
+        }
+
+        // Hàm bổ trợ thực thi mã lệnh JavaScript sau khi trang đã tải hoàn tất (kể cả các thư viện JS ngoài như Bootstrap đặt cuối trang)
+        private void ChayScriptSauKhiTaiTrang(string key, string js)
+        {
+            string script = "window.addEventListener('load', function () {" + js + "});";
+            ScriptManager.RegisterStartupScript(this, this.GetType(), key, script, true);
+        }
+
+        // Kích hoạt hiển thị hộp thoại Modal Sửa nhà cung cấp trên giao diện
+        private void MoModalSua()
+        {
+            ChayScriptSauKhiTaiTrang("PopModal",
+                "var el = document.getElementById('modalSuaNCC');" +
+                "if (el && window.bootstrap) { new bootstrap.Modal(el).show(); }");
+        }
+
+        // Ẩn/Đóng hộp thoại Modal Sửa (đảm bảo an toàn tuyệt đối ngay cả khi Modal chưa từng được mở)
+        private void DongModalSua()
+        {
+            ChayScriptSauKhiTaiTrang("HideModal",
+                "var el = document.getElementById('modalSuaNCC');" +
+                "if (el && window.bootstrap) { var m = bootstrap.Modal.getInstance(el); if (m) { m.hide(); } }");
+        }
