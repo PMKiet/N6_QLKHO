@@ -164,13 +164,15 @@ namespace N6_QLKHO
             return new SqlConnection(connectionString);
         }
 
-        public class NghiepVuException : Exception
-        {
-            public NghiepVuException(string message) : base(message) { }
-        }
+        
         /// <summary>
         /// Tạo SqlConnection mới (chưa mở) để các trang tự dùng khi cần transaction
         /// </summary>
 
+    }
+
+    public class NghiepVuException : Exception
+    {
+        public NghiepVuException(string message) : base(message) { }
     }
 }

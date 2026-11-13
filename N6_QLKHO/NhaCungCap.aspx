@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Quản Lý Nhà Cung Cấp" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="NhaCungCap.aspx.cs" Inherits="N6_QLKHO.NhaCungCap" %>
+<%@ Page Title="Quản Lý Nhà Cung Cấp" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="NhaCungCap.aspx.cs" Inherits="N6_QLKHO.NhaCungCap" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style>
