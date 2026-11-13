@@ -296,3 +296,28 @@ namespace N6_QLKHO
                 ShowMessage(DescribeError(ex, "mở thông tin tài khoản"), false);
             }
         }
+        // =====================================================================
+        // 9. CHỨC NĂNG ĐẶT LẠI MẬT KHẨU (RESET PASSWORD)
+        // =====================================================================
+        // Đặt lại mật khẩu mặc định của một tài khoản về chuỗi "123456" (đã mã hóa MD5)
+        private void DatLaiMatKhau(string ma)
+        {
+            try
+            {
+                int n = DatabaseHelper.ExecuteNonQuery(
+                    "UPDATE NguoiDung SET MatKhau = @mk WHERE MaNhanVien = @ma",
+                    new SqlParameter[] {
+                        P("@mk", SqlDbType.VarChar, 255, Md5("123456")),
+                        P("@ma", SqlDbType.VarChar, 10, ma)
+                    });
+
+                if (n == 0)
+                    ShowMessage("Tài khoản " + ma + " không còn tồn tại.", false);
+                else
+                    ShowMessage("Đã đặt lại mật khẩu của " + ma + " về 123456.", true);
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(DescribeError(ex, "đặt lại mật khẩu"), false);
+            }
+        }
