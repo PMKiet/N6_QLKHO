@@ -139,19 +139,35 @@
         }
         .form-control.is-invalid, .form-select.is-invalid { background-image: none; }
         .btn[disabled] { cursor: not-allowed; }
+        /* ===== IN PHIẾU (dùng chung: Phiếu nhập / Phiếu xuất / Lịch sử kho) ===== */
+        @page { size: A4 portrait; margin: 0; } /* margin 0 => trình duyệt không chèn ngày giờ + URL ở đầu/cuối trang */
         @media print {
-            body * { visibility: hidden; }
-            #vungInPhieuNhap, #vungInPhieuNhap * { visibility: visible; }
-            #vungInPhieuNhap {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                box-shadow: none !important;
-                border: none !important;
-            }
+            html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; margin: 0 !important; background: #fff !important; }
+            /* Bỏ hẳn mọi thứ ngoài phiếu khỏi luồng in => không còn trang trắng thừa */
+            body *:not(.phieu-in):not(.phieu-in *):not(:has(.phieu-in)) { display: none !important; }
             .no-print { display: none !important; }
+
+            .phieu-in {
+                position: absolute; left: 0; top: 0; width: 100%; box-sizing: border-box;
+                margin: 0 !important; padding: 14mm 14mm 12mm !important;
+                background: #fff !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+                color: #111827 !important; font-size: 11pt;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+            .phieu-in .card-body { padding: 0 !important; }
+            .phieu-in .text-primary, .phieu-in .text-success { color: #111827 !important; }
+            .phieu-in .bg-light { background: #fff !important; border: 1px solid #94a3b8 !important; border-radius: 6px !important; }
+            .phieu-in .badge, .phieu-in .pay-badge { background: #fff !important; color: #111827 !important; border: 1px solid #475569 !important; }
+
+            /* Bảng: không cuộn ngang, có viền rõ, tự xuống dòng */
+            .phieu-in .table-responsive { overflow: visible !important; }
+            .phieu-in table { width: 100% !important; border-collapse: collapse !important; font-size: 10pt; }
+            .phieu-in th, .phieu-in td { border: 1px solid #475569 !important; padding: 5px 7px !important; background: transparent !important; color: #111827 !important; vertical-align: middle; }
+            .phieu-in th { background: #e5e7eb !important; font-weight: 700; text-transform: none; }
+            .phieu-in tr, .phieu-in .row.text-center { page-break-inside: avoid; break-inside: avoid; }
+            .phieu-in .col-nowrap { white-space: nowrap; }
         }
+        .phieu-in .sig-space { height: 80px; }
     </style>
 </asp:Content>
 
@@ -373,7 +389,7 @@
             </div>
 
             <!-- Vùng nội dung phiếu chuẩn để xem trước & In/PDF -->
-            <div id="vungInPhieuNhap" class="wms-card mb-4 bg-white">
+            <div id="vungInPhieuNhap" class="phieu-in wms-card mb-4 bg-white">
                 <div class="card-body p-4 p-md-5">
                     <div class="row border-bottom pb-3 mb-4 align-items-center">
                         <div class="col-7">
@@ -420,10 +436,11 @@
                         <div class="col-4">
                             <div class="fw-bold small">Người lập phiếu</div>
                             <div class="text-muted fst-italic small">(Ký, họ tên)</div>
-                            <div class="mt-5 fw-semibold small"><asp:Literal ID="litChuKyNguoiLap" runat="server"></asp:Literal></div>
+                            <div class="sig-space"></div>
+                            <div class="fw-semibold small"><asp:Literal ID="litChuKyNguoiLap" runat="server"></asp:Literal></div>
                         </div>
                         <div class="col-4">
-                            <div class="fw-bold small">Đại diện giao hàng</div>
+                            <div class="fw-bold small">Người giao hàng (NCC)</div>
                             <div class="text-muted fst-italic small">(Ký, họ tên)</div>
                         </div>
                         <div class="col-4">
