@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
@@ -103,12 +103,11 @@ namespace N6_QLKHO
             }
             catch (Exception ex)
             {
-                // Không có bảng giá thì chỉ mất tính năng tự điền giá, không ảnh hưởng chức năng chính
                 System.Diagnostics.Trace.TraceError(ex.ToString());
             }
         }
 
-        // 2. Bảng tạm chi tiết xuất - dùng kiểu dữ liệu thật (int/decimal) để tránh lỗi định dạng số theo vùng
+        // 2. Bảng tạm chi tiết xuất - dùng kiểu dữ liệu thật (int/decimal)
         private DataTable TaoBangChiTiet()
         {
             DataTable dt = new DataTable("ChiTietXuat");
@@ -190,7 +189,6 @@ namespace N6_QLKHO
                     return;
                 }
 
-                // NumberStyles.None: chỉ chấp nhận chữ số -> tự loại số âm, số thập phân, ký tự lạ
                 int soLuong;
                 if (!int.TryParse(txtSoLuongXuat.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out soLuong) || soLuong <= 0)
                 {
@@ -218,7 +216,6 @@ namespace N6_QLKHO
 
                 DataTable dt = LayBangChiTiet();
 
-                // Hàng đã có trong phiếu -> gộp số lượng (khóa chính ChiTietPhieuXuat là MaPhieuXuat + MaHangHoa)
                 DataRow dongCu = null;
                 foreach (DataRow r in dt.Rows)
                 {
@@ -237,7 +234,6 @@ namespace N6_QLKHO
                     return;
                 }
 
-                // Kiểm tra tồn kho
                 int tonKhaDung = LayTonKhaDung(maHang);
                 if (daCo + soLuong > tonKhaDung)
                 {
@@ -286,7 +282,7 @@ namespace N6_QLKHO
             }
         }
 
-        // 5. Kiểm tra toàn bộ phiếu. Trả về thông báo lỗi, hoặc null nếu hợp lệ.
+        // 5. Kiểm tra toàn bộ phiếu
         private string KiemTraThongTinPhieu()
         {
             string maPX = txtMaPhieuXuat.Text.Trim();
@@ -303,7 +299,6 @@ namespace N6_QLKHO
             if (string.IsNullOrEmpty(ddlTrangThai.SelectedValue))
                 return "Vui lòng chọn Trạng thái thanh toán!";
 
-            // Người lập phiếu phải còn tồn tại trong hệ thống
             object nv = DatabaseHelper.ExecuteScalar(
                 "SELECT COUNT(1) FROM NguoiDung WHERE MaNhanVien = @MaNV",
                 new SqlParameter[] { new SqlParameter("@MaNV", Convert.ToString(Session["MaNhanVien"])) });
@@ -329,7 +324,6 @@ namespace N6_QLKHO
                     return "Đơn đặt hàng này đã được lập phiếu xuất trước đó!";
             }
 
-            // Kiểm tra lại tồn kho (có thể đã thay đổi từ lúc thêm dòng)
             foreach (DataRow r in dtChiTiet.Rows)
             {
                 string ma = Convert.ToString(r["MaHangHoa"]);
@@ -387,6 +381,8 @@ namespace N6_QLKHO
                     "</div>";
 
                 litTongTienXemTruoc.Text = tongTien.ToString("N0") + " đ";
+                litMaPhieuHeader.Text = Server.HtmlEncode(txtMaPhieuXuat.Text.Trim());
+                litChuKyNguoiLap.Text = Server.HtmlEncode(Convert.ToString(Session["HoTen"]));
 
                 lblThongBao.Text = "";
                 ChuyenCheDo(true);
@@ -478,7 +474,6 @@ namespace N6_QLKHO
                     }
                 });
 
-                // Thành công: reset form, nạp lại danh mục (tồn kho, đơn hàng) và gợi ý mã mới
                 KhoiTaoBangChiTiet();
                 LoadDropdownData();
                 txtMaPhieuXuat.Text = GoiYMaPhieu();
@@ -492,8 +487,7 @@ namespace N6_QLKHO
             }
         }
 
-        // Trừ tồn theo nguyên tắc hết hạn trước - xuất trước (FEFO), bỏ qua lô đã hết hạn.
-        // Khóa các dòng tồn kho (UPDLOCK) để hai người xuất cùng lúc không trừ trùng.
+        // Trừ tồn theo nguyên tắc FEFO
         private void TruTonKho(SqlConnection conn, SqlTransaction tran, string maHH, string tenHH, int canXuat)
         {
             DataTable cacLo = new DataTable();
@@ -533,6 +527,98 @@ namespace N6_QLKHO
             }
         }
 
+        // 9. Xuất file Excel & Word từ bản xem trước
+        private string TaoHtmlPhieuXuat()
+        {
+            DataTable dtChiTiet = LayBangChiTiet();
+            DateTime ngayXuat = DateTime.ParseExact(txtNgayXuat.Text.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            string maPX = Server.HtmlEncode(txtMaPhieuXuat.Text.Trim());
+            string donHang = string.IsNullOrEmpty(ddlDonHang.SelectedValue)
+                ? "Xuất trực tiếp (không theo đơn đặt hàng)"
+                : Server.HtmlEncode(ddlDonHang.SelectedItem.Text);
+            string nguoiLap = Server.HtmlEncode(Convert.ToString(Session["HoTen"]));
+            string trangThai = Server.HtmlEncode(ddlTrangThai.SelectedValue);
+
+            decimal tongTien = 0;
+            StringBuilder sb = new StringBuilder();
+            sb.Append("<html><head><meta charset='utf-8' /></head><body style='font-family: Times New Roman, Arial, sans-serif; font-size: 13pt;'>");
+            sb.Append("<table width='100%' border='0'><tr>");
+            sb.Append("<td><b>HỆ THỐNG QUẢN LÝ KHO VẬT TƯ (N6_QLKHO)</b><br/><i>Bộ phận Kho vận &amp; Xuất hàng</i></td>");
+            sb.Append("<td align='right'><b>Mẫu số: 02 - VT</b><br/>Ngày xuất file: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + "</td>");
+            sb.Append("</tr></table>");
+
+            sb.Append("<h2 align='center' style='margin-bottom:4px;'>PHIẾU XUẤT KHO</h2>");
+            sb.Append("<p align='center' style='margin-top:0;'>Số phiếu: <b>" + maPX + "</b> &nbsp;|&nbsp; Ngày xuất: <b>" + ngayXuat.ToString("dd/MM/yyyy") + "</b></p>");
+
+            sb.Append("<table width='100%' border='0' cellpadding='4' style='margin-bottom:10px;'>");
+            sb.Append("<tr><td width='50%'><b>Đơn đặt hàng:</b> " + donHang + "</td><td width='50%'><b>Người lập phiếu:</b> " + nguoiLap + "</td></tr>");
+            sb.Append("<tr><td><b>Trạng thái thanh toán:</b> " + trangThai + "</td><td></td></tr>");
+            sb.Append("</table>");
+
+            sb.Append("<table width='100%' border='1' cellspacing='0' cellpadding='6' style='border-collapse:collapse;'>");
+            sb.Append("<tr style='background-color:#e2e8f0; font-weight:bold; text-align:center;'>");
+            sb.Append("<th>STT</th><th>Mã Hàng</th><th>Tên Hàng Hóa</th><th>Số Lượng</th><th>Đơn Giá (đ)</th><th>Thành Tiền (đ)</th>");
+            sb.Append("</tr>");
+
+            int stt = 1;
+            foreach (DataRow r in dtChiTiet.Rows)
+            {
+                decimal thanhTien = Convert.ToDecimal(r["ThanhTien"]);
+                tongTien += thanhTien;
+                sb.Append("<tr>");
+                sb.Append("<td align='center'>" + stt++ + "</td>");
+                sb.Append("<td align='center'>" + Server.HtmlEncode(Convert.ToString(r["MaHangHoa"])) + "</td>");
+                sb.Append("<td>" + Server.HtmlEncode(Convert.ToString(r["TenHangHoa"])) + "</td>");
+                sb.Append("<td align='right'>" + Convert.ToInt32(r["SoLuongXuat"]).ToString("N0") + "</td>");
+                sb.Append("<td align='right'>" + Convert.ToDecimal(r["DonGiaXuat"]).ToString("N0") + "</td>");
+                sb.Append("<td align='right'><b>" + thanhTien.ToString("N0") + "</b></td>");
+                sb.Append("</tr>");
+            }
+
+            sb.Append("<tr><td colspan='5' align='right'><b>TỔNG CỘNG THANH TOÁN:</b></td><td align='right'><b>" + tongTien.ToString("N0") + " đ</b></td></tr>");
+            sb.Append("</table><br/><br/>");
+
+            sb.Append("<table width='100%' border='0' style='text-align:center;'><tr>");
+            sb.Append("<td width='33%'><b>Người lập phiếu</b><br/><i>(Ký, họ tên)</i><br/><br/><br/><br/><b>" + nguoiLap + "</b></td>");
+            sb.Append("<td width='33%'><b>Người nhận hàng</b><br/><i>(Ký, họ tên)</i><br/><br/><br/><br/></td>");
+            sb.Append("<td width='33%'><b>Thủ kho / Kế toán</b><br/><i>(Ký, họ tên)</i><br/><br/><br/><br/></td>");
+            sb.Append("</tr></table>");
+            sb.Append("</body></html>");
+            return sb.ToString();
+        }
+
+        protected void btnXuatExcel_Click(object sender, EventArgs e)
+        {
+            string loi = KiemTraThongTinPhieu();
+            if (loi != null) { HienThiThongBao(loi, "danger"); return; }
+
+            string tenFile = "PhieuXuat_" + txtMaPhieuXuat.Text.Trim() + ".xls";
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ContentType = "application/vnd.ms-excel";
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.Charset = "utf-8";
+            Response.AddHeader("Content-Disposition", "attachment;filename=" + tenFile);
+            Response.Write("\uFEFF" + TaoHtmlPhieuXuat());
+            Response.End();
+        }
+
+        protected void btnXuatWord_Click(object sender, EventArgs e)
+        {
+            string loi = KiemTraThongTinPhieu();
+            if (loi != null) { HienThiThongBao(loi, "danger"); return; }
+
+            string tenFile = "PhieuXuat_" + txtMaPhieuXuat.Text.Trim() + ".doc";
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ContentType = "application/msword";
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.Charset = "utf-8";
+            Response.AddHeader("Content-Disposition", "attachment;filename=" + tenFile);
+            Response.Write("\uFEFF" + TaoHtmlPhieuXuat());
+            Response.End();
+        }
+
         // Chỉ ẩn/hiện bằng CSS để các ô nhập vẫn được gửi lên server và giữ nguyên giá trị
         private void ChuyenCheDo(bool xemTruoc)
         {
@@ -540,7 +626,7 @@ namespace N6_QLKHO
             pnlXemTruoc.Style["display"] = xemTruoc ? "block" : "none";
         }
 
-        // Ô thông tin trong khung xem trước (encode = true nếu giá trị là văn bản thường)
+        // Ô thông tin trong khung xem trước
         private string DongThongTin(string nhan, string giaTri, bool encode)
         {
             return "<div class='col-12 col-md-4'>" +
@@ -549,7 +635,7 @@ namespace N6_QLKHO
                    "</div>";
         }
 
-        // Hiển thị thông báo (nội dung luôn được mã hóa HTML)
+        // Hiển thị thông báo
         private void HienThiThongBao(string message, string type)
         {
             string icon = type == "success" ? "fa-circle-check"
