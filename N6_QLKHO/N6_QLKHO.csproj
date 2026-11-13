@@ -87,7 +87,6 @@
     <Content Include="HangHoa.aspx" />
     <Content Include="LoaiHangHoa.aspx" />
     <Content Include="Login.aspx" />
-    <Content Include="NguoiDung.aspx" />
     <Content Include="NhaCungCap.aspx" />
     <Content Include="PhieuNhap.aspx" />
     <Content Include="PhieuXuat.aspx" />
@@ -150,13 +149,6 @@
     </Compile>
     <Compile Include="Login.aspx.designer.cs">
       <DependentUpon>Login.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="NguoiDung.aspx.cs">
-      <DependentUpon>NguoiDung.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="NguoiDung.aspx.designer.cs">
-      <DependentUpon>NguoiDung.aspx</DependentUpon>
     </Compile>
     <Compile Include="NhaCungCap.aspx.cs">
       <DependentUpon>NhaCungCap.aspx</DependentUpon>

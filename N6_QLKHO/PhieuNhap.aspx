@@ -1,4 +1,4 @@
-<%@ Page Title="Lập Phiếu Nhập Kho" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="PhieuNhap.aspx.cs" Inherits="N6_QLKHO.PhieuNhap" %>
+<%@ Page Title="Lập Phiếu Nhập Kho" Language="C#" MasterPageFile="~/Site.Master" ResponseEncoding="utf-8" ContentType="text/html; charset=utf-8" AutoEventWireup="true" CodeBehind="PhieuNhap.aspx.cs" Inherits="N6_QLKHO.PhieuNhap" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <style>
