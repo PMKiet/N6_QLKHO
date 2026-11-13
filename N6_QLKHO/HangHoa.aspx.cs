@@ -1,6 +1,8 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
+using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -14,6 +16,71 @@ namespace N6_QLKHO
             {
                 LoadLoaiHang();
                 BindGrid();
+            }
+        }
+
+        // =====================================================================
+        // HÀM HỖ TRỢ MỞ / ĐÓNG FORM SỬA (MODAL) VÀ THÔNG BÁO
+        // =====================================================================
+        // Chạy script sau khi trang tải xong (kể cả thư viện Bootstrap nằm cuối trang)
+        private void ChayScriptSauKhiTaiTrang(string key, string js)
+        {
+            string script = "window.addEventListener('load', function () {" + js + "});";
+            ScriptManager.RegisterStartupScript(this, this.GetType(), key, script, true);
+        }
+
+        // Mở form sửa
+        private void MoModalSua()
+        {
+            ChayScriptSauKhiTaiTrang("PopModalSua",
+                "var el = document.getElementById('modalSuaHang');" +
+                "if (el && window.bootstrap) { new bootstrap.Modal(el).show(); }");
+        }
+
+        // Đóng form sửa - an toàn kể cả khi form chưa từng được mở
+        private void DongModalSua()
+        {
+            ChayScriptSauKhiTaiTrang("HideModalSua",
+                "var el = document.getElementById('modalSuaHang');" +
+                "if (el && window.bootstrap) { var m = bootstrap.Modal.getInstance(el); if (m) { m.hide(); } }");
+        }
+
+        // Hiển thị thông báo (success / danger) ở góc phải màn hình, tự tắt sau 5 giây
+        private void HienThiThongBao(string message, string type)
+        {
+            string msgJs = HttpUtility.JavaScriptStringEncode(message);
+            string typeJs = HttpUtility.JavaScriptStringEncode(type);
+
+            string js =
+                "var d = document.createElement('div');" +
+                "d.className = 'alert alert-" + typeJs + " alert-dismissible fade show shadow';" +
+                "d.setAttribute('role', 'alert');" +
+                "d.style.cssText = 'position:fixed;top:20px;right:20px;z-index:2000;max-width:420px;';" +
+                "d.appendChild(document.createTextNode('" + msgJs + "'));" +
+                "var b = document.createElement('button');" +
+                "b.type = 'button'; b.className = 'btn-close';" +
+                "b.setAttribute('data-bs-dismiss', 'alert'); b.setAttribute('aria-label', 'Close');" +
+                "d.appendChild(b);" +
+                "document.body.appendChild(d);" +
+                "setTimeout(function () { if (d.parentNode) { d.parentNode.removeChild(d); } }, 5000);";
+
+            ChayScriptSauKhiTaiTrang("ThongBao", js);
+        }
+
+        // Đổ dữ liệu 1 dòng hàng hóa vào các ô trong form sửa
+        private void DoDuLieuVaoFormSua(DataRow row)
+        {
+            txtSuaMaHang.Text = row["MaHangHoa"].ToString();
+            txtSuaTenHang.Text = row["TenHangHoa"].ToString();
+            ddlSuaLoaiHang.SelectedValue = row["MaLoai"].ToString();
+            txtSuaDonViTinh.Text = row["DonViTinh"].ToString();
+
+            // Hiển thị đơn giá dạng số thuần (92000), tránh lệch dấu . , theo ngôn ngữ máy
+            txtSuaDonGia.Text = Convert.ToDecimal(row["DonGia"]).ToString("0.##", CultureInfo.InvariantCulture);
+
+            if (row["HanSuDung"] != DBNull.Value)
+            {
+                txtSuaHanSuDung.Text = Convert.ToDateTime(row["HanSuDung"]).ToString("yyyy-MM-dd");
             }
         }
 
@@ -91,6 +158,7 @@ namespace N6_QLKHO
         {
             if (e.CommandName == "EditItem")
             {
+                // Bấm icon bút xanh: đọc dữ liệu dòng đó đổ vào form sửa rồi mở form
                 string maHang = e.CommandArgument.ToString();
 
                 string query = "SELECT * FROM HangHoa WHERE MaHangHoa = @Ma";
@@ -102,22 +170,13 @@ namespace N6_QLKHO
                 DataTable dt = DatabaseHelper.ExecuteQuery(query, parameters);
                 if (dt.Rows.Count > 0)
                 {
-                    DataRow row = dt.Rows[0];
-
-                    txtSuaMaHang.Text = row["MaHangHoa"].ToString();
-                    txtSuaTenHang.Text = row["TenHangHoa"].ToString();
-                    ddlSuaLoaiHang.SelectedValue = row["MaLoai"].ToString();
-                    txtSuaDonViTinh.Text = row["DonViTinh"].ToString();
-                    txtSuaDonGia.Text = row["DonGia"].ToString();
-
-                    if (row["HanSuDung"] != DBNull.Value)
-                    {
-                        txtSuaHanSuDung.Text = Convert.ToDateTime(row["HanSuDung"]).ToString("yyyy-MM-dd");
-                    }
-
-                    // Kích hoạt hiển thị Modal Sửa bằng JavaScript
-                    string script = "var myModal = new bootstrap.Modal(document.getElementById('modalSuaHang')); myModal.show();";
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", script, true);
+                    DoDuLieuVaoFormSua(dt.Rows[0]);
+                    MoModalSua(); // Kích hoạt hiển thị Modal Sửa
+                }
+                else
+                {
+                    HienThiThongBao("Hàng hóa " + maHang + " không còn tồn tại (có thể đã bị xóa).", "danger");
+                    BindGrid();
                 }
             }
             else if (e.CommandName == "DeleteItem")
@@ -138,7 +197,45 @@ namespace N6_QLKHO
         // 5. Xử lý Lưu thông tin sau khi chỉnh sửa
         protected void btnLuuSuaHang_Click(object sender, EventArgs e)
         {
-            string query = @"UPDATE HangHoa 
+            string ma = txtSuaMaHang.Text.Trim();
+            string ten = txtSuaTenHang.Text.Trim();
+            string dvt = txtSuaDonViTinh.Text.Trim();
+            string giaText = txtSuaDonGia.Text.Trim();
+            string hsdText = txtSuaHanSuDung.Text.Trim();
+
+            // Kiểm tra dữ liệu nhập
+            if (ten.Length == 0 || dvt.Length == 0 || giaText.Length == 0 || hsdText.Length == 0)
+            {
+                HienThiThongBao("Vui lòng nhập đầy đủ tên, đơn vị tính, đơn giá và hạn sử dụng.", "danger");
+                MoModalSua();
+                return;
+            }
+            if (ten.Length > 150 || dvt.Length > 20)
+            {
+                HienThiThongBao("Tên hàng tối đa 150 ký tự, đơn vị tính tối đa 20 ký tự.", "danger");
+                MoModalSua();
+                return;
+            }
+
+            decimal gia;
+            if (!decimal.TryParse(giaText, NumberStyles.Number, CultureInfo.InvariantCulture, out gia) || gia < 0)
+            {
+                HienThiThongBao("Đơn giá phải là số không âm (ví dụ: 92000).", "danger");
+                MoModalSua();
+                return;
+            }
+
+            DateTime hsd;
+            if (!DateTime.TryParse(hsdText, CultureInfo.InvariantCulture, DateTimeStyles.None, out hsd))
+            {
+                HienThiThongBao("Hạn sử dụng không hợp lệ.", "danger");
+                MoModalSua();
+                return;
+            }
+
+            try
+            {
+                string query = @"UPDATE HangHoa 
                      SET TenHangHoa = @Ten, 
                          DonViTinh = @DVT, 
                          DonGia = @Gia, 
@@ -146,23 +243,35 @@ namespace N6_QLKHO
                          MaLoai = @MaLoai 
                      WHERE MaHangHoa = @Ma";
 
-            SqlParameter[] parameters = new SqlParameter[]
+                SqlParameter[] parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Ma", ma),
+                    new SqlParameter("@Ten", ten),
+                    new SqlParameter("@DVT", dvt),
+                    new SqlParameter("@Gia", gia),
+                    new SqlParameter("@HSD", hsd),
+                    new SqlParameter("@MaLoai", ddlSuaLoaiHang.SelectedValue)
+                };
+
+                int n = DatabaseHelper.ExecuteNonQuery(query, parameters);
+                if (n == 0)
+                {
+                    HienThiThongBao("Hàng hóa " + ma + " không còn tồn tại nên không thể cập nhật.", "danger");
+                    BindGrid();
+                    return;
+                }
+
+                HienThiThongBao("Cập nhật hàng hóa " + ma + " thành công!", "success");
+                BindGrid(); // Tải lại bảng dữ liệu
+
+                // Đóng Modal sau khi lưu thành công
+                DongModalSua();
+            }
+            catch (Exception ex)
             {
-                new SqlParameter("@Ma", txtSuaMaHang.Text.Trim()),
-                new SqlParameter("@Ten", txtSuaTenHang.Text.Trim()),
-                new SqlParameter("@DVT", txtSuaDonViTinh.Text.Trim()),
-                new SqlParameter("@Gia", Convert.ToDecimal(txtSuaDonGia.Text.Trim())),
-                new SqlParameter("@HSD", Convert.ToDateTime(txtSuaHanSuDung.Text)),
-                new SqlParameter("@MaLoai", ddlSuaLoaiHang.SelectedValue)
-            };
-
-            DatabaseHelper.ExecuteNonQuery(query, parameters);
-
-            BindGrid(); // Tải lại bảng dữ liệu
-
-            // Đóng Modal sau khi lưu thành công
-            string script = "var myModalEl = document.getElementById('modalSuaHang'); var modal = bootstrap.Modal.getInstance(myModalEl); modal.hide();";
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "HideModal", script, true);
+                HienThiThongBao("Lỗi khi cập nhật hàng hóa: " + ex.Message, "danger");
+                MoModalSua(); // Giữ form sửa mở để người dùng chỉnh lại
+            }
         }
 
         // 6. Xử lý nút Làm mới trong Modal Sửa
@@ -176,20 +285,11 @@ namespace N6_QLKHO
 
             if (dt.Rows.Count > 0)
             {
-                DataRow row = dt.Rows[0];
-                txtSuaTenHang.Text = row["TenHangHoa"].ToString();
-                ddlSuaLoaiHang.SelectedValue = row["MaLoai"].ToString();
-                txtSuaDonViTinh.Text = row["DonViTinh"].ToString();
-                txtSuaDonGia.Text = row["DonGia"].ToString();
-                if (row["HanSuDung"] != DBNull.Value)
-                {
-                    txtSuaHanSuDung.Text = Convert.ToDateTime(row["HanSuDung"]).ToString("yyyy-MM-dd");
-                }
+                DoDuLieuVaoFormSua(dt.Rows[0]);
             }
 
             // Giữ Modal mở để tiếp tục chỉnh sửa
-            string script = "var myModal = new bootstrap.Modal(document.getElementById('modalSuaHang')); myModal.show();";
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "Pop", script, true);
+            MoModalSua();
         }
 
         protected void btnSearch_Click(object sender, EventArgs e)
