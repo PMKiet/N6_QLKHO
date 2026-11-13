@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -346,6 +347,8 @@ namespace N6_QLKHO
                     "</div>";
 
                 litTongTienXemTruoc.Text = tongTien.ToString("N0") + " đ";
+                litMaPhieuHeader.Text = Server.HtmlEncode(txtMaPhieuNhap.Text.Trim());
+                litChuKyNguoiLap.Text = Server.HtmlEncode(Convert.ToString(Session["HoTen"]));
 
                 lblThongBao.Text = "";
                 ChuyenCheDo(true);
@@ -447,6 +450,97 @@ namespace N6_QLKHO
                 ChuyenCheDo(false);
                 HienThiThongBao(DatabaseHelper.LayThongBaoLoi(ex), "danger");
             }
+        }
+
+        // 9. Xuất file Excel & Word từ bản xem trước
+        private string TaoHtmlPhieuNhap()
+        {
+            DataTable dtChiTiet = LayBangChiTiet();
+            DateTime ngayNhap = DateTime.ParseExact(txtNgayNhap.Text.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            string maPN = Server.HtmlEncode(txtMaPhieuNhap.Text.Trim());
+            string ncc = Server.HtmlEncode(ddlNhaCungCap.SelectedItem.Text);
+            string nguoiLap = Server.HtmlEncode(Convert.ToString(Session["HoTen"]));
+            string trangThai = Server.HtmlEncode(ddlTrangThai.SelectedValue);
+
+            decimal tongTien = 0;
+            StringBuilder sb = new StringBuilder();
+            sb.Append("<html><head><meta charset='utf-8' /></head><body style='font-family: Times New Roman, Arial, sans-serif; font-size: 13pt;'>");
+            sb.Append("<table width='100%' border='0'><tr>");
+            sb.Append("<td><b>HỆ THỐNG QUẢN LÝ KHO VẬT TƯ (N6_QLKHO)</b><br/><i>Bộ phận Kho vận &amp; Cung ứng</i></td>");
+            sb.Append("<td align='right'><b>Mẫu số: 01 - VT</b><br/>Ngày xuất file: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + "</td>");
+            sb.Append("</tr></table>");
+
+            sb.Append("<h2 align='center' style='margin-bottom:4px;'>PHIẾU NHẬP KHO</h2>");
+            sb.Append("<p align='center' style='margin-top:0;'>Số phiếu: <b>" + maPN + "</b> &nbsp;|&nbsp; Ngày nhập: <b>" + ngayNhap.ToString("dd/MM/yyyy") + "</b></p>");
+
+            sb.Append("<table width='100%' border='0' cellpadding='4' style='margin-bottom:10px;'>");
+            sb.Append("<tr><td width='50%'><b>Nhà cung cấp:</b> " + ncc + "</td><td width='50%'><b>Người lập phiếu:</b> " + nguoiLap + "</td></tr>");
+            sb.Append("<tr><td><b>Trạng thái thanh toán:</b> " + trangThai + "</td><td></td></tr>");
+            sb.Append("</table>");
+
+            sb.Append("<table width='100%' border='1' cellspacing='0' cellpadding='6' style='border-collapse:collapse;'>");
+            sb.Append("<tr style='background-color:#e2e8f0; font-weight:bold; text-align:center;'>");
+            sb.Append("<th>STT</th><th>Mã Hàng</th><th>Tên Hàng Hóa</th><th>Số Lượng</th><th>Đơn Giá (đ)</th><th>Hạn Dùng Lô</th><th>Thành Tiền (đ)</th>");
+            sb.Append("</tr>");
+
+            int stt = 1;
+            foreach (DataRow r in dtChiTiet.Rows)
+            {
+                decimal thanhTien = Convert.ToDecimal(r["ThanhTien"]);
+                tongTien += thanhTien;
+                sb.Append("<tr>");
+                sb.Append("<td align='center'>" + stt++ + "</td>");
+                sb.Append("<td align='center'>" + Server.HtmlEncode(Convert.ToString(r["MaHangHoa"])) + "</td>");
+                sb.Append("<td>" + Server.HtmlEncode(Convert.ToString(r["TenHangHoa"])) + "</td>");
+                sb.Append("<td align='right'>" + Convert.ToInt32(r["SoLuongNhap"]).ToString("N0") + "</td>");
+                sb.Append("<td align='right'>" + Convert.ToDecimal(r["DonGiaNhap"]).ToString("N0") + "</td>");
+                sb.Append("<td align='center'>" + Convert.ToDateTime(r["HanSuDungLo"]).ToString("dd/MM/yyyy") + "</td>");
+                sb.Append("<td align='right'><b>" + thanhTien.ToString("N0") + "</b></td>");
+                sb.Append("</tr>");
+            }
+
+            sb.Append("<tr><td colspan='6' align='right'><b>TỔNG CỘNG THANH TOÁN:</b></td><td align='right'><b>" + tongTien.ToString("N0") + " đ</b></td></tr>");
+            sb.Append("</table><br/><br/>");
+
+            sb.Append("<table width='100%' border='0' style='text-align:center;'><tr>");
+            sb.Append("<td width='33%'><b>Người lập phiếu</b><br/><i>(Ký, họ tên)</i><br/><br/><br/><br/><b>" + nguoiLap + "</b></td>");
+            sb.Append("<td width='33%'><b>Người giao hàng</b><br/><i>(Ký, họ tên)</i><br/><br/><br/><br/></td>");
+            sb.Append("<td width='33%'><b>Thủ kho / Kế toán</b><br/><i>(Ký, họ tên)</i><br/><br/><br/><br/></td>");
+            sb.Append("</tr></table>");
+            sb.Append("</body></html>");
+            return sb.ToString();
+        }
+
+        protected void btnXuatExcel_Click(object sender, EventArgs e)
+        {
+            string loi = KiemTraThongTinPhieu();
+            if (loi != null) { HienThiThongBao(loi, "danger"); return; }
+
+            string tenFile = "PhieuNhap_" + txtMaPhieuNhap.Text.Trim() + ".xls";
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ContentType = "application/vnd.ms-excel";
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.Charset = "utf-8";
+            Response.AddHeader("Content-Disposition", "attachment;filename=" + tenFile);
+            Response.Write("\uFEFF" + TaoHtmlPhieuNhap());
+            Response.End();
+        }
+
+        protected void btnXuatWord_Click(object sender, EventArgs e)
+        {
+            string loi = KiemTraThongTinPhieu();
+            if (loi != null) { HienThiThongBao(loi, "danger"); return; }
+
+            string tenFile = "PhieuNhap_" + txtMaPhieuNhap.Text.Trim() + ".doc";
+            Response.Clear();
+            Response.Buffer = true;
+            Response.ContentType = "application/msword";
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.Charset = "utf-8";
+            Response.AddHeader("Content-Disposition", "attachment;filename=" + tenFile);
+            Response.Write("\uFEFF" + TaoHtmlPhieuNhap());
+            Response.End();
         }
 
         // Chỉ ẩn/hiện bằng CSS để các ô nhập vẫn được gửi lên server và giữ nguyên giá trị
