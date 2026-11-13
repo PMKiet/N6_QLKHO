@@ -212,3 +212,46 @@ namespace N6_QLKHO
             txtMaNV.Enabled = true; // Cho phép nhập lại mã khi chuyển sang chế độ thêm mới
             ddlChucVu.SelectedIndex = 0;
         }
+        // =====================================================================
+        // 7. CÁC SỰ KIỆN TƯƠNG TÁC GIAO DIỆN (UI EVENTS)
+        // =====================================================================
+        
+        // Sự kiện bấm nút Tìm kiếm
+        protected void btnTimKiem_Click(object sender, EventArgs e)
+        {
+            LoadData();
+        }
+
+        // Sự kiện bấm nút Thêm tài khoản (mở form nhập liệu mới)
+        protected void btnThem_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+            lblTieuDeForm.Text = "Thêm tài khoản";
+            lblMatKhau.Text = "Mật khẩu";
+            pnlForm.Visible = true;
+        }
+
+        // Sự kiện bấm nút Hủy (đóng form nhập liệu)
+        protected void btnHuy_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+            pnlForm.Visible = false;
+        }
+
+        // Sự kiện điều hướng các thao tác trên từng dòng của GridView (Sửa, Xóa, Đặt lại mật khẩu)
+        protected void gvNguoiDung_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            string ma = Convert.ToString(e.CommandArgument);
+            if (string.IsNullOrWhiteSpace(ma))
+            {
+                ShowMessage("Không xác định được tài khoản cần thao tác.", false);
+                return;
+            }
+
+            switch (e.CommandName)
+            {
+                case "Sua": MoFormSua(ma); break;
+                case "Xoa": XoaTaiKhoan(ma); break;
+                case "DatLai": DatLaiMatKhau(ma); break;
+            }
+        }
