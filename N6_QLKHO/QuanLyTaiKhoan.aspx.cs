@@ -255,3 +255,44 @@ namespace N6_QLKHO
                 case "DatLai": DatLaiMatKhau(ma); break;
             }
         }
+        // =====================================================================
+        // 8. CHỨC NĂNG SỬA TÀI KHOẢN (UPDATE - LOAD DATA TO FORM)
+        // =====================================================================
+        // Đọc thông tin chi tiết của 1 tài khoản đổ lên form để người dùng chỉnh sửa
+        private void MoFormSua(string ma)
+        {
+            try
+            {
+                DataTable dt = DatabaseHelper.ExecuteQuery(
+                    "SELECT TenDangNhap, HoTen, SoDienThoai, DiaChi, ChucVu FROM NguoiDung WHERE MaNhanVien = @ma",
+                    new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
+
+                if (dt.Rows.Count == 0)
+                {
+                    ShowMessage("Tài khoản " + ma + " không còn tồn tại (có thể đã bị xoá).", false);
+                    LoadData();
+                    return;
+                }
+
+                DataRow r = dt.Rows[0];
+                hfMaGoc.Value = ma;
+                txtMaNV.Text = ma;
+                txtMaNV.Enabled = false; // Khóa ô Mã nhân viên không cho sửa khóa chính
+                txtTenDN.Text = Convert.ToString(r["TenDangNhap"]);
+                txtMatKhau.Text = "";    // Để trống mật khẩu (nếu không nhập nghĩa là giữ nguyên mật khẩu cũ)
+                txtHoTen.Text = Convert.ToString(r["HoTen"]);
+                txtSDT.Text = Convert.ToString(r["SoDienThoai"]);
+                txtDiaChi.Text = Convert.ToString(r["DiaChi"]);
+
+                string cv = Convert.ToString(r["ChucVu"]);
+                ddlChucVu.SelectedValue = ddlChucVu.Items.FindByValue(cv) != null ? cv : ChucVuNhanVien;
+
+                lblTieuDeForm.Text = "Sửa tài khoản " + ma;
+                lblMatKhau.Text = "Mật khẩu mới (bỏ trống nếu không đổi)";
+                pnlForm.Visible = true;
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(DescribeError(ex, "mở thông tin tài khoản"), false);
+            }
+        }
