@@ -258,3 +258,25 @@ namespace N6_QLKHO
                 MoModalSua(); // Giữ modal mở nếu xảy ra lỗi ngoại lệ CSDL
             }
         }
+        // =====================================================================
+        // 8. CHỨC NĂNG LÀM MỚI / HOÀN TÁC DỮ LIỆU TRONG MODAL SỬA (RESET MODAL)
+        // =====================================================================
+        // Tải lại nguyên bản dữ liệu cũ từ cơ sở dữ liệu đổ ngược lại vào các ô nhập trong modal (hủy các thay đổi đang nhập dở)
+        protected void btnLamMoiSua_Click(object sender, EventArgs e)
+        {
+            string maNCC = txtSuaMaNCC.Text.Trim();
+            string query = "SELECT * FROM NhaCungCap WHERE MaNCC = @Ma";
+            SqlParameter[] parameters = new SqlParameter[] { new SqlParameter("@Ma", maNCC) };
+            DataTable dt = DatabaseHelper.ExecuteQuery(query, parameters);
+
+            if (dt.Rows.Count > 0)
+            {
+                DataRow row = dt.Rows[0];
+                txtSuaTenNCC.Text = row["TenNCC"].ToString();
+                txtSuaSoDienThoai.Text = row["SoDienThoai"].ToString();
+                txtSuaEmail.Text = row["Email"].ToString();
+                txtSuaDiaChi.Text = row["DiaChi"].ToString();
+            }
+
+            MoModalSua(); // Giữ modal mở sau khi reset
+        }
