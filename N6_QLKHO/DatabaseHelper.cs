@@ -159,6 +159,7 @@ namespace N6_QLKHO
             return "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.";
         }
     }
+<<<<<<< HEAD
 
     /// <summary>
     /// Lỗi nghiệp vụ (ví dụ: không đủ tồn kho) - thông báo được phép hiển thị trực tiếp cho người dùng.
@@ -167,4 +168,6 @@ namespace N6_QLKHO
     {
         public NghiepVuException(string message) : base(message) { }
     }
+=======
+>>>>>>> origin/master
 }
