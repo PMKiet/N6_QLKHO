@@ -69,3 +69,38 @@ namespace N6_QLKHO
                 "var el = document.getElementById('modalSuaNCC');" +
                 "if (el && window.bootstrap) { var m = bootstrap.Modal.getInstance(el); if (m) { m.hide(); } }");
         }
+        // =====================================================================
+        // 4. CHỨC NĂNG HIỂN THỊ VÀ TÌM KIẾM DỮ LIỆU (READ / SEARCH)
+        // =====================================================================
+
+        // Nạp danh sách nhà cung cấp lên GridView (có hỗ trợ lọc theo từ khóa tìm kiếm)
+        private void BindGrid(string keyword = "")
+        {
+            string query = "SELECT MaNCC, TenNCC, DiaChi, SoDienThoai, Email FROM NhaCungCap";
+            SqlParameter[] parameters = null;
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                query += " WHERE MaNCC LIKE @kw OR TenNCC LIKE @kw OR SoDienThoai LIKE @kw";
+                parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@kw", "%" + keyword + "%")
+                };
+            }
+
+            gvNhaCungCap.DataSource = DatabaseHelper.ExecuteQuery(query, parameters);
+            gvNhaCungCap.DataBind();
+        }
+
+        // Xử lý sự kiện bấm nút Tìm kiếm
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            BindGrid(txtSearch.Text.Trim());
+        }
+
+        // Xử lý sự kiện bấm nút Làm mới / Reset bộ lọc tìm kiếm
+        protected void btnReset_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            BindGrid();
+        }
