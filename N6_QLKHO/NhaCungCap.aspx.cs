@@ -207,3 +207,54 @@ namespace N6_QLKHO
                 }
             }
         }
+        // =====================================================================
+        // 7. CHỨC NĂNG CẬP NHẬT / LƯU THÔNG TIN SỬA (UPDATE)
+        // =====================================================================
+        protected void btnLuuSuaNCC_Click(object sender, EventArgs e)
+        {
+            string maNCC = txtSuaMaNCC.Text.Trim();
+            string tenNCC = txtSuaTenNCC.Text.Trim();
+            string sdt = txtSuaSoDienThoai.Text.Trim();
+            string email = txtSuaEmail.Text.Trim();
+            string diaChi = txtSuaDiaChi.Text.Trim();
+
+            // Kiểm tra các trường thông tin bắt buộc trong form sửa
+            if (string.IsNullOrEmpty(tenNCC) || string.IsNullOrEmpty(sdt))
+            {
+                HienThiThongBao("Tên và số điện thoại không được để trống!", "danger");
+                MoModalSua(); // Giữ form sửa tiếp tục mở để người dùng nhập bù thông tin
+                return;
+            }
+
+            // Kiểm tra lại tính hợp lệ của số điện thoại sau khi sửa
+            if (!RegexSDT.IsMatch(sdt))
+            {
+                HienThiThongBao("Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 hoặc 11 chữ số (không chứa chữ cái).", "danger");
+                MoModalSua(); // Giữ form sửa mở để người dùng chỉnh sửa lại
+                return;
+            }
+
+            try
+            {
+                string query = "UPDATE NhaCungCap SET TenNCC = @Ten, DiaChi = @DiaChi, SoDienThoai = @SDT, Email = @Email WHERE MaNCC = @Ma";
+                SqlParameter[] parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Ma", maNCC),
+                    new SqlParameter("@Ten", tenNCC),
+                    new SqlParameter("@DiaChi", diaChi),
+                    new SqlParameter("@SDT", sdt),
+                    new SqlParameter("@Email", email)
+                };
+
+                DatabaseHelper.ExecuteNonQuery(query, parameters);
+                HienThiThongBao("Cập nhật thông tin nhà cung cấp thành công!", "success");
+                BindGrid();
+
+                DongModalSua(); // Đóng Modal Sửa sau khi cập nhật thành công
+            }
+            catch (Exception ex)
+            {
+                HienThiThongBao("Lỗi khi cập nhật nhà cung cấp: " + ex.Message, "danger");
+                MoModalSua(); // Giữ modal mở nếu xảy ra lỗi ngoại lệ CSDL
+            }
+        }
