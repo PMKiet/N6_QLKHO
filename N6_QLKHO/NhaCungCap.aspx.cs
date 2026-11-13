@@ -104,3 +104,57 @@ namespace N6_QLKHO
             txtSearch.Text = "";
             BindGrid();
         }
+        // =====================================================================
+        // 5. CHỨC NĂNG THÊM MỚI NHÀ CUNG CẤP (CREATE)
+        // =====================================================================
+        protected void btnLuuNCC_Click(object sender, EventArgs e)
+        {
+            string maNCC = txtMaNCC.Text.Trim();
+            string tenNCC = txtTenNCC.Text.Trim();
+            string sdt = txtSoDienThoai.Text.Trim();
+            string email = txtEmail.Text.Trim();
+            string diaChi = txtDiaChi.Text.Trim();
+
+            // Kiểm tra các trường dữ liệu bắt buộc không được bỏ trống
+            if (string.IsNullOrEmpty(maNCC) || string.IsNullOrEmpty(tenNCC) || string.IsNullOrEmpty(sdt))
+            {
+                HienThiThongBao("Vui lòng điền đầy đủ các thông tin bắt buộc (*)", "danger");
+                return;
+            }
+
+            // Kiểm tra định dạng tính hợp lệ của số điện thoại bằng Regex (phòng trường hợp người dùng lách luật qua mặt trình duyệt)
+            if (!RegexSDT.IsMatch(sdt))
+            {
+                HienThiThongBao("Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 hoặc 11 chữ số (không chứa chữ cái).", "danger");
+                return;
+            }
+
+            try
+            {
+                string query = "INSERT INTO NhaCungCap (MaNCC, TenNCC, DiaChi, SoDienThoai, Email) VALUES (@Ma, @Ten, @DiaChi, @SDT, @Email)";
+                SqlParameter[] parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@Ma", maNCC),
+                    new SqlParameter("@Ten", tenNCC),
+                    new SqlParameter("@DiaChi", diaChi),
+                    new SqlParameter("@SDT", sdt),
+                    new SqlParameter("@Email", email)
+                };
+
+                DatabaseHelper.ExecuteNonQuery(query, parameters);
+                HienThiThongBao("Thêm nhà cung cấp thành công!", "success");
+
+                // Xóa sạch các ô nhập liệu sau khi thêm mới thành công
+                txtMaNCC.Text = "";
+                txtTenNCC.Text = "";
+                txtSoDienThoai.Text = "";
+                txtEmail.Text = "";
+                txtDiaChi.Text = "";
+
+                BindGrid(); // Tải lại danh sách trên bảng
+            }
+            catch (Exception ex)
+            {
+                HienThiThongBao("Lỗi khi thêm nhà cung cấp (Có thể trùng mã): " + ex.Message, "danger");
+            }
+        }
