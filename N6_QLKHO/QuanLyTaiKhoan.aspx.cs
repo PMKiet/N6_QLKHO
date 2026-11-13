@@ -321,3 +321,58 @@ namespace N6_QLKHO
                 ShowMessage(DescribeError(ex, "đặt lại mật khẩu"), false);
             }
         }
+        // =====================================================================
+        // 10. CHỨC NĂNG XÓA TÀI KHOẢN (DELETE)
+        // =====================================================================
+        // Xóa một tài khoản khỏi hệ thống (có kiểm tra an toàn: không được xóa chính mình, phải còn ít nhất 1 Quản lý)
+        private void XoaTaiKhoan(string ma)
+        {
+            try
+            {
+                DataTable dt = DatabaseHelper.ExecuteQuery(
+                    "SELECT TenDangNhap, ChucVu FROM NguoiDung WHERE MaNhanVien = @ma",
+                    new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
+
+                if (dt.Rows.Count == 0)
+                {
+                    ShowMessage("Tài khoản " + ma + " không còn tồn tại (có thể đã bị xoá).", false);
+                    LoadData();
+                    return;
+                }
+
+                string tenDN = Convert.ToString(dt.Rows[0]["TenDangNhap"]);
+                string chucVu = Convert.ToString(dt.Rows[0]["ChucVu"]);
+
+                // Kiểm tra ràng buộc 1: Không cho phép tự xóa tài khoản đang đăng nhập
+                string current = Session["TenDangNhap"] as string;
+                if (!string.IsNullOrEmpty(current) &&
+                    string.Equals(tenDN, current, StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowMessage("Không thể xoá tài khoản đang đăng nhập.", false);
+                    return;
+                }
+
+                // Kiểm tra ràng buộc 2: Hệ thống bắt buộc phải còn duy trì ít nhất một tài khoản Quản lý
+                if (chucVu == ChucVuQuanLy &&
+                    Count("SELECT COUNT(*) FROM NguoiDung WHERE ChucVu = @cv", P("@cv", SqlDbType.NVarChar, 50, ChucVuQuanLy)) <= 1)
+                {
+                    ShowMessage("Không thể xoá: hệ thống phải còn ít nhất một tài khoản Quản lý.", false);
+                    return;
+                }
+
+                int n = DatabaseHelper.ExecuteNonQuery(
+                    "DELETE FROM NguoiDung WHERE MaNhanVien = @ma", 
+                    new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
+
+                if (n == 0)
+                    ShowMessage("Tài khoản " + ma + " không còn tồn tại.", false);
+                else
+                    ShowMessage("Đã xoá tài khoản " + ma + ".", true);
+
+                LoadData();
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(DescribeError(ex, "xoá tài khoản"), false);
+            }
+        }
