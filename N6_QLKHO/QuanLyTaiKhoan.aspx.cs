@@ -69,3 +69,49 @@ namespace N6_QLKHO
                 return sb.ToString();
             }
         }
+        // =====================================================================
+        // 4. XỬ LÝ VÀ GHI LOG NGOẠI LỆ (EXCEPTION HANDLING)
+        // =====================================================================
+        // Chuyển đổi các mã lỗi hệ thống/SQL khó hiểu thành thông báo thân thiện cho người dùng
+        private string DescribeError(Exception ex, string hanhDong)
+        {
+            System.Diagnostics.Trace.TraceError("[QuanLyTaiKhoan] Lỗi khi " + hanhDong + ": " + ex);
+
+            var sqlEx = ex as SqlException;
+            if (sqlEx != null)
+            {
+                switch (sqlEx.Number)
+                {
+                    case 547: // Vi phạm ràng buộc khóa ngoại (Foreign Key Constraint)
+                        return "Không thể " + hanhDong + ": dữ liệu đang được sử dụng ở nơi khác (đã lập phiếu nhập hoặc phiếu xuất).";
+                    case 2627:
+                    case 2601: // Vi phạm khóa chính hoặc UNIQUE (trùng mã / trùng tên đăng nhập)
+                        return "Không thể " + hanhDong + ": mã nhân viên hoặc tên đăng nhập đã tồn tại.";
+                    case 515: // Chèn giá trị NULL vào cột bắt buộc NOT NULL
+                        return "Không thể " + hanhDong + ": còn thiếu thông tin bắt buộc.";
+                    case 8152:
+                    case 2628: // Dữ liệu nhập vào vượt quá độ dài cho phép của cột
+                        return "Không thể " + hanhDong + ": có thông tin nhập quá dài.";
+                    case 1205: // Lỗi kẹt dòng (Deadlock)
+                        return "Hệ thống đang bận, vui lòng thử lại sau vài giây.";
+                    case -2: // Timeout kết nối CSDL
+                        return "Máy chủ phản hồi quá lâu, vui lòng thử lại.";
+                    case 4060: // Không tìm thấy hoặc không mở được Database
+                        return "Không mở được cơ sở dữ liệu N6_QLKHOVATTU. Hãy kiểm tra tên database trong Web.config.";
+                    case 18456: // Lỗi đăng nhập SQL Server (sai tài khoản/mật khẩu SQL)
+                        return "Đăng nhập SQL Server thất bại. Hãy kiểm tra tài khoản trong chuỗi kết nối.";
+                    case -1:
+                    case 2:
+                    case 53:
+                    case 1231: // Lỗi mất kết nối tới máy chủ chứa SQL Server
+                        return "Không kết nối được SQL Server. Hãy kiểm tra dịch vụ SQL Server và Web.config.";
+                    default:
+                        return "Lỗi cơ sở dữ liệu khi " + hanhDong + " (mã " + sqlEx.Number + ").";
+                }
+            }
+
+            if (ex is InvalidOperationException)
+                return "Không thể kết nối cơ sở dữ liệu. Vui lòng kiểm tra chuỗi kết nối trong Web.config.";
+
+            return "Đã xảy ra lỗi không mong muốn khi " + hanhDong + ". Vui lòng thử lại.";
+        }
