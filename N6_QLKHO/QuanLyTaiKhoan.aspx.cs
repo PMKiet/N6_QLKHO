@@ -160,3 +160,55 @@ namespace N6_QLKHO
 
             return null; // Trả về null nghĩa là dữ liệu hoàn toàn hợp lệ
         }
+        // =====================================================================
+        // 6. HIỂN THỊ VÀ TÌM KIẾM DỮ LIỆU (READ)
+        // =====================================================================
+        // Tải danh sách người dùng lên GridView (có hỗ trợ lọc theo từ khóa tìm kiếm)
+        private void LoadData()
+        {
+            try
+            {
+                string kw = txtTimKiem.Text.Trim();
+                string sql = "SELECT MaNhanVien, TenDangNhap, HoTen, SoDienThoai, DiaChi, ChucVu FROM NguoiDung";
+                DataTable dt;
+
+                if (kw.Length > 0)
+                {
+                    // Lọc và bảo mật chuỗi tìm kiếm chống lỗi ký tự đặc biệt trong lệnh LIKE
+                    string safe = kw.Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+                    sql += " WHERE MaNhanVien LIKE @kw OR TenDangNhap LIKE @kw OR HoTen LIKE @kw OR SoDienThoai LIKE @kw ORDER BY MaNhanVien";
+                    dt = DatabaseHelper.ExecuteQuery(sql, new SqlParameter[] { P("@kw", SqlDbType.NVarChar, 120, "%" + safe + "%") });
+                }
+                else
+                {
+                    sql += " ORDER BY MaNhanVien";
+                    dt = DatabaseHelper.ExecuteQuery(sql);
+                }
+
+                gvNguoiDung.DataSource = dt;
+                gvNguoiDung.DataBind();
+            }
+            catch (Exception ex)
+            {
+                gvNguoiDung.DataSource = null;
+                gvNguoiDung.DataBind();
+                ShowMessage(DescribeError(ex, "tải danh sách tài khoản"), false);
+            }
+        }
+
+        // Hiển thị thông báo trạng thái (thành công hoặc lỗi) lên giao diện
+        private void ShowMessage(string text, bool ok)
+        {
+            lblThongBao.Text = Server.HtmlEncode(text);
+            lblThongBao.CssClass = "nd-msg " + (ok ? "ok" : "err");
+            lblThongBao.Visible = true;
+        }
+
+        // Xóa trắng toàn bộ các ô nhập liệu trên form chi tiết
+        private void ClearForm()
+        {
+            hfMaGoc.Value = "";
+            txtMaNV.Text = txtTenDN.Text = txtMatKhau.Text = txtHoTen.Text = txtSDT.Text = txtDiaChi.Text = "";
+            txtMaNV.Enabled = true; // Cho phép nhập lại mã khi chuyển sang chế độ thêm mới
+            ddlChucVu.SelectedIndex = 0;
+        }
