@@ -9,7 +9,7 @@ namespace N6_QLKHO
     {
         // Lấy chuỗi kết nối từ Web.config (hoặc chuỗi mặc định nếu chưa cấu hình Web.config)
         private static string connectionString = ConfigurationManager.ConnectionStrings["MyDbConnection"]?.ConnectionString
-            ?? "Data Source=.\\SQLEXPRESS;Initial Catalog=N6_QLKHOVATTU;Integrated Security=True;Encrypt=False";
+            ?? "Data Source=DESKTOP-UKT66TU;Initial Catalog=N6_QLKHOVATTU;Integrated Security=True;Encrypt=False";
 
         /// <summary>
         /// Thực thi câu lệnh SELECT và trả về DataTable (Dùng để nạp dữ liệu lên GridView, DropDownList...)
@@ -158,11 +158,19 @@ namespace N6_QLKHO
 
             return "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.";
         }
+
+        public static SqlConnection TaoKetNoi()
+        {
+            return new SqlConnection(connectionString);
+        }
+
+        
+        /// <summary>
+        /// Tạo SqlConnection mới (chưa mở) để các trang tự dùng khi cần transaction
+        /// </summary>
+
     }
 
-    /// <summary>
-    /// Lỗi nghiệp vụ (ví dụ: không đủ tồn kho) - thông báo được phép hiển thị trực tiếp cho người dùng.
-    /// </summary>
     public class NghiepVuException : Exception
     {
         public NghiepVuException(string message) : base(message) { }
