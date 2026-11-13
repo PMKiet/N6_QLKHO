@@ -76,5 +76,98 @@ namespace N6_QLKHO
             }
             return result;
         }
+
+        /// <summary>
+        /// Tạo SqlCommand gắn với một transaction đang mở.
+        /// </summary>
+        public static SqlCommand TaoLenh(SqlConnection conn, SqlTransaction tran, string query, params SqlParameter[] parameters)
+        {
+            SqlCommand cmd = new SqlCommand(query, conn, tran);
+            if (parameters != null && parameters.Length > 0)
+            {
+                cmd.Parameters.AddRange(parameters);
+            }
+            return cmd;
+        }
+
+        /// <summary>
+        /// Chạy nhiều thao tác trong MỘT transaction: tất cả cùng thành công (Commit),
+        /// hoặc có lỗi ở bất kỳ bước nào thì hoàn tác toàn bộ (Rollback) rồi ném lại lỗi.
+        /// </summary>
+        public static void ExecuteTransaction(Action<SqlConnection, SqlTransaction> work)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                using (SqlTransaction tran = conn.BeginTransaction(IsolationLevel.ReadCommitted))
+                {
+                    try
+                    {
+                        work(conn, tran);
+                        tran.Commit();
+                    }
+                    catch
+                    {
+                        try { tran.Rollback(); } catch { /* kết nối đã đứt, không còn gì để hoàn tác */ }
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Đổi ngoại lệ thành thông báo thân thiện cho người dùng (không lộ chi tiết kỹ thuật).
+        /// Chi tiết lỗi thật được ghi vào Trace để quản trị viên xem.
+        /// </summary>
+        public static string LayThongBaoLoi(Exception ex)
+        {
+            if (ex is NghiepVuException)
+            {
+                return ex.Message;
+            }
+
+            System.Diagnostics.Trace.TraceError(ex.ToString());
+
+            SqlException sql = ex as SqlException;
+            if (sql != null)
+            {
+                switch (sql.Number)
+                {
+                    case 2627:
+                    case 2601:
+                        return "Dữ liệu bị trùng (mã đã tồn tại). Vui lòng kiểm tra lại.";
+                    case 547:
+                        return "Dữ liệu tham chiếu không hợp lệ (nhà cung cấp, nhân viên, đơn hàng hoặc hàng hóa không còn tồn tại).";
+                    case 1205:
+                        return "Hệ thống đang bận, vui lòng thử lại sau ít giây.";
+                    case -2:
+                        return "Hết thời gian chờ cơ sở dữ liệu. Vui lòng thử lại.";
+                    case 2628:
+                    case 8152:
+                        return "Có thông tin nhập quá dài so với quy định.";
+                    case 8115:
+                    case 220:
+                        return "Có giá trị số vượt quá giới hạn cho phép.";
+                    case 53:
+                    case 4060:
+                    case 18456:
+                        return "Không kết nối được cơ sở dữ liệu. Vui lòng liên hệ quản trị viên.";
+                }
+                return "Lỗi cơ sở dữ liệu. Vui lòng thử lại hoặc liên hệ quản trị viên.";
+            }
+
+            return "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.";
+        }
     }
+<<<<<<< HEAD
+
+    /// <summary>
+    /// Lỗi nghiệp vụ (ví dụ: không đủ tồn kho) - thông báo được phép hiển thị trực tiếp cho người dùng.
+    /// </summary>
+    public class NghiepVuException : Exception
+    {
+        public NghiepVuException(string message) : base(message) { }
+    }
+=======
+>>>>>>> origin/master
 }
