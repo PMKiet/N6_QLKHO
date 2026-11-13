@@ -150,6 +150,33 @@ namespace N6_QLKHO
         protected global::System.Web.UI.WebControls.Panel pnlXemTruoc;
 
         /// <summary>
+        /// btnXuatExcel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnXuatExcel;
+
+        /// <summary>
+        /// btnXuatWord control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnXuatWord;
+
+        /// <summary>
+        /// litMaPhieuHeader control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litMaPhieuHeader;
+
+        /// <summary>
         /// litThongTinXemTruoc control.
         /// </summary>
         /// <remarks>
@@ -175,6 +202,15 @@ namespace N6_QLKHO
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal litTongTienXemTruoc;
+
+        /// <summary>
+        /// litChuKyNguoiLap control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litChuKyNguoiLap;
 
         /// <summary>
         /// btnQuayLai control.
