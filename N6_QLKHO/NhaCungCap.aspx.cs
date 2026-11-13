@@ -158,3 +158,52 @@ namespace N6_QLKHO
                 HienThiThongBao("Lỗi khi thêm nhà cung cấp (Có thể trùng mã): " + ex.Message, "danger");
             }
         }
+        // =====================================================================
+        // 6. XỬ LÝ SỰ KIỆN TRÊN DÒNG GRIDVIEW (EDIT / DELETE ROUTING)
+        // =====================================================================
+        protected void gvNhaCungCap_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "EditItem")
+            {
+                // Khi bấm nút Sửa (icon bút): lấy mã nhà cung cấp, truy vấn lấy thông tin cũ đổ vào modal sửa rồi mở modal lên
+                string maNCC = e.CommandArgument.ToString();
+                string query = "SELECT * FROM NhaCungCap WHERE MaNCC = @Ma";
+                SqlParameter[] parameters = new SqlParameter[] { new SqlParameter("@Ma", maNCC) };
+
+                DataTable dt = DatabaseHelper.ExecuteQuery(query, parameters);
+                if (dt.Rows.Count > 0)
+                {
+                    DataRow row = dt.Rows[0];
+                    txtSuaMaNCC.Text = row["MaNCC"].ToString();
+                    txtSuaTenNCC.Text = row["TenNCC"].ToString();
+                    txtSuaSoDienThoai.Text = row["SoDienThoai"].ToString();
+                    txtSuaEmail.Text = row["Email"].ToString();
+                    txtSuaDiaChi.Text = row["DiaChi"].ToString();
+
+                    MoModalSua(); // Hiển thị Modal Sửa lên màn hình
+                }
+                else
+                {
+                    HienThiThongBao("Nhà cung cấp " + maNCC + " không còn tồn tại (có thể đã bị xóa).", "danger");
+                    BindGrid();
+                }
+            }
+            else if (e.CommandName == "DeleteItem")
+            {
+                // Khi bấm nút Xóa (icon thùng rác): thực hiện xóa nhà cung cấp theo mã tương ứng
+                string maNCC = e.CommandArgument.ToString();
+                try
+                {
+                    string query = "DELETE FROM NhaCungCap WHERE MaNCC = @Ma";
+                    SqlParameter[] parameters = new SqlParameter[] { new SqlParameter("@Ma", maNCC) };
+                    DatabaseHelper.ExecuteNonQuery(query, parameters);
+                    HienThiThongBao("Đã xóa nhà cung cấp thành công!", "success");
+                    BindGrid();
+                }
+                catch (Exception)
+                {
+                    // Bắt lỗi ràng buộc khóa ngoại nếu nhà cung cấp này đang được sử dụng ở bảng phiếu nhập
+                    HienThiThongBao("Không thể xóa do nhà cung cấp này đang có phiếu nhập liên quan!", "danger");
+                }
+            }
+        }
