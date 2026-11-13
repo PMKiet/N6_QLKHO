@@ -280,3 +280,16 @@ namespace N6_QLKHO
 
             MoModalSua(); // Giữ modal mở sau khi reset
         }
+        // =====================================================================
+        // 9. HÀM HIỂN THỊ THÔNG BÁO TRẠNG THÁI (NOTIFICATION HELPER)
+        // =====================================================================
+        // Tạo khung HTML cảnh báo Bootstrap động để thông báo thành công hoặc lỗi cho người dùng
+        private void HienThiThongBao(string message, string type)
+        {
+            lblThongBao.Text = $"<div class='alert alert-{type} alert-dismissible fade show' role='alert'>" +
+                               $"<i class='fa-solid fa-circle-exclamation me-2'></i> {message}" +
+                               $"<button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>" +
+                               $"</div>";
+        }
+    }
+}
