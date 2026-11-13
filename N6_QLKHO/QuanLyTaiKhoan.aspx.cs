@@ -19,10 +19,10 @@ namespace N6_QLKHO
 
         // Regex kiểm tra Mã nhân viên: chỉ gồm chữ, số, gạch dưới, tối đa 10 ký tự
         private static readonly Regex RegexMa = new Regex(@"^[A-Za-z0-9_]{1,10}$");
-        
+
         // Regex kiểm tra Tên đăng nhập: 3-50 ký tự, không dấu, có thể chứa dấu chấm/gạch dưới
         private static readonly Regex RegexTenDN = new Regex(@"^[A-Za-z0-9_.]{3,50}$");
-        
+
         // Regex kiểm tra Số điện thoại: bắt buộc bắt đầu bằng số 0 và có từ 10 đến 11 chữ số (tuyệt đối không chứa chữ cái)
         private static readonly Regex RegexSDT = new Regex(@"^0\d{9,10}$");
 
@@ -31,6 +31,9 @@ namespace N6_QLKHO
         // =====================================================================
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Cấu hình ô nhập liệu (SĐT chỉ nhập số, biểu tượng con mắt xem mật khẩu) - chạy ở mọi lần tải trang
+            CauHinhNhapLieu();
+
             // Chỉ nạp dữ liệu danh sách vào lần đầu tiên tải trang (tránh load lại khi bấm nút)
             if (!IsPostBack)
             {
@@ -39,9 +42,67 @@ namespace N6_QLKHO
         }
 
         // =====================================================================
+        // 2.1. CẤU HÌNH Ô NHẬP LIỆU PHÍA TRÌNH DUYỆT
+        // =====================================================================
+        // - Ô Số điện thoại: chỉ cho gõ/dán chữ số, tối đa 11 số
+        // - Ô Mật khẩu: có biểu tượng con mắt nằm trong ô để hiện/ẩn mật khẩu
+        private void CauHinhNhapLieu()
+        {
+            // ---- Số điện thoại chỉ được nhập số ----
+            txtSDT.MaxLength = 11;
+            txtSDT.Attributes["inputmode"] = "numeric"; // Điện thoại sẽ hiện bàn phím số
+            // Chặn phím không phải số (48 = '0', 57 = '9')
+            txtSDT.Attributes["onkeypress"] = "return event.charCode >= 48 && event.charCode <= 57;";
+            // Xóa mọi ký tự không phải số (kể cả khi người dùng dán chuỗi có chữ vào)
+            txtSDT.Attributes["oninput"] = "this.value = this.value.replace(/\\D/g, '');";
+
+            // ---- Biểu tượng con mắt xem / ẩn mật khẩu ----
+            txtMatKhau.Attributes["autocomplete"] = "new-password";
+
+            string script = @"
+(function () {
+  var txt = document.getElementById('{ID}');
+  if (!txt || document.getElementById('btnXemMK')) return;
+
+  // Ẩn biểu tượng xem mật khẩu mặc định của trình duyệt Edge để không bị hiện 2 con mắt
+  var st = document.createElement('style');
+  st.textContent = '#{ID}::-ms-reveal{display:none;}';
+  document.head.appendChild(st);
+
+  var eyeOpen = ""<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>"";
+  var eyeOff  = ""<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24'/><line x1='1' y1='1' x2='23' y2='23'/></svg>"";
+
+  // Bọc ô mật khẩu trong một khung để đặt biểu tượng nằm bên phải, bên trong ô
+  var wrap = document.createElement('div');
+  wrap.style.position = 'relative';
+  txt.parentNode.insertBefore(wrap, txt);
+  wrap.appendChild(txt);
+  txt.style.paddingRight = '42px';
+
+  var btn = document.createElement('button');
+  btn.type = 'button';   // type=button: không gây postback
+  btn.id = 'btnXemMK';
+  btn.title = 'Hiện / ẩn mật khẩu';
+  btn.innerHTML = eyeOpen;
+  btn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);' +
+                      'border:0;background:transparent;padding:0;cursor:pointer;color:#6c757d;' +
+                      'display:flex;align-items:center;';
+  btn.onclick = function () {
+    if (txt.type === 'password') { txt.type = 'text'; btn.innerHTML = eyeOff; }
+    else { txt.type = 'password'; btn.innerHTML = eyeOpen; }
+  };
+  wrap.appendChild(btn);
+})();";
+
+            script = script.Replace("{ID}", txtMatKhau.ClientID);
+
+            ClientScript.RegisterStartupScript(this.GetType(), "XemMatKhau", script, true);
+        }
+
+        // =====================================================================
         // 3. CÁC HÀM TIỆN ÍCH DÙNG CHUNG (HELPER FUNCTIONS)
         // =====================================================================
-        
+
         // Hàm rút gọn thực thi truy vấn trả về một giá trị duy nhất (Ví dụ: đếm số lượng COUNT(*))
         private int Count(string sql, params SqlParameter[] ps)
         {
@@ -69,6 +130,7 @@ namespace N6_QLKHO
                 return sb.ToString();
             }
         }
+
         // =====================================================================
         // 4. XỬ LÝ VÀ GHI LOG NGOẠI LỆ (EXCEPTION HANDLING)
         // =====================================================================
@@ -115,6 +177,7 @@ namespace N6_QLKHO
 
             return "Đã xảy ra lỗi không mong muốn khi " + hanhDong + ". Vui lòng thử lại.";
         }
+
         // =====================================================================
         // 5. KIỂM TRA TÍNH HỢP LỆ DỮ LIỆU ĐẦU VÀO (VALIDATION)
         // =====================================================================
@@ -160,6 +223,7 @@ namespace N6_QLKHO
 
             return null; // Trả về null nghĩa là dữ liệu hoàn toàn hợp lệ
         }
+
         // =====================================================================
         // 6. HIỂN THỊ VÀ TÌM KIẾM DỮ LIỆU (READ)
         // =====================================================================
@@ -212,10 +276,11 @@ namespace N6_QLKHO
             txtMaNV.Enabled = true; // Cho phép nhập lại mã khi chuyển sang chế độ thêm mới
             ddlChucVu.SelectedIndex = 0;
         }
+
         // =====================================================================
         // 7. CÁC SỰ KIỆN TƯƠNG TÁC GIAO DIỆN (UI EVENTS)
         // =====================================================================
-        
+
         // Sự kiện bấm nút Tìm kiếm
         protected void btnTimKiem_Click(object sender, EventArgs e)
         {
@@ -255,6 +320,7 @@ namespace N6_QLKHO
                 case "DatLai": DatLaiMatKhau(ma); break;
             }
         }
+
         // =====================================================================
         // 8. CHỨC NĂNG SỬA TÀI KHOẢN (UPDATE - LOAD DATA TO FORM)
         // =====================================================================
@@ -296,6 +362,7 @@ namespace N6_QLKHO
                 ShowMessage(DescribeError(ex, "mở thông tin tài khoản"), false);
             }
         }
+
         // =====================================================================
         // 9. CHỨC NĂNG ĐẶT LẠI MẬT KHẨU (RESET PASSWORD)
         // =====================================================================
@@ -321,6 +388,7 @@ namespace N6_QLKHO
                 ShowMessage(DescribeError(ex, "đặt lại mật khẩu"), false);
             }
         }
+
         // =====================================================================
         // 10. CHỨC NĂNG XÓA TÀI KHOẢN (DELETE)
         // =====================================================================
@@ -361,7 +429,7 @@ namespace N6_QLKHO
                 }
 
                 int n = DatabaseHelper.ExecuteNonQuery(
-                    "DELETE FROM NguoiDung WHERE MaNhanVien = @ma", 
+                    "DELETE FROM NguoiDung WHERE MaNhanVien = @ma",
                     new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
 
                 if (n == 0)
@@ -376,6 +444,7 @@ namespace N6_QLKHO
                 ShowMessage(DescribeError(ex, "xoá tài khoản"), false);
             }
         }
+
         // =====================================================================
         // 11. CHỨC NĂNG LƯU DỮ LIỆU (SAVE / INSERT OR UPDATE)
         // =====================================================================
@@ -457,7 +526,7 @@ namespace N6_QLKHO
             if (chucVu != ChucVuQuanLy)
             {
                 DataTable cu = DatabaseHelper.ExecuteQuery(
-                    "SELECT ChucVu FROM NguoiDung WHERE MaNhanVien = @ma", 
+                    "SELECT ChucVu FROM NguoiDung WHERE MaNhanVien = @ma",
                     new SqlParameter[] { P("@ma", SqlDbType.VarChar, 10, ma) });
 
                 if (cu.Rows.Count > 0 && Convert.ToString(cu.Rows[0]["ChucVu"]) == ChucVuQuanLy &&
