@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -30,6 +30,10 @@ namespace N6_QLKHO
             {
                 LoadDanhSachHangHoa();
                 LoadDanhSachDonHang();
+            }
+            else if (ddlHangHoa.Items.Count <= 1)
+            {
+                LoadDanhSachHangHoa();
             }
         }
 
@@ -73,13 +77,13 @@ namespace N6_QLKHO
             {
                 var dict = new Dictionary<string, decimal>();
                 using (SqlConnection conn = DatabaseHelper.TaoKetNoi())
-                using (SqlCommand cmd = new SqlCommand("SELECT MaHangHoa, DonGia FROM HangHoa", conn))
+                using (SqlCommand cmd = new SqlCommand("SELECT RTRIM(LTRIM(MaHangHoa)) AS MaHangHoa, DonGia FROM HangHoa", conn))
                 {
                     conn.Open();
                     using (SqlDataReader rd = cmd.ExecuteReader())
                     {
                         while (rd.Read())
-                            dict[rd["MaHangHoa"].ToString()] = Convert.ToDecimal(rd["DonGia"]);
+                            dict[rd["MaHangHoa"].ToString().Trim()] = Convert.ToDecimal(rd["DonGia"]);
                     }
                 }
                 GiaHangJson = DuaVaoJs(new JavaScriptSerializer().Serialize(dict));
@@ -113,7 +117,7 @@ namespace N6_QLKHO
             try
             {
                 using (SqlConnection conn = DatabaseHelper.TaoKetNoi())
-                using (SqlCommand cmd = new SqlCommand("SELECT MaHangHoa, TenHangHoa FROM HangHoa", conn))
+                using (SqlCommand cmd = new SqlCommand("SELECT RTRIM(LTRIM(MaHangHoa)) AS MaHangHoa, TenHangHoa FROM HangHoa ORDER BY MaHangHoa", conn))
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
                     DataTable dt = new DataTable();
@@ -196,17 +200,17 @@ namespace N6_QLKHO
 
             foreach (DataRow rowDon in dtDon.Rows)
             {
-                string maDon = rowDon["MaDonHang"].ToString();
+                string maDon = rowDon["MaDonHang"].ToString().Trim();
                 DateTime ngay = Convert.ToDateTime(rowDon["NgayDatHang"]);
 
                 var dsChiTiet = new List<object>();
                 foreach (DataRow rowChiTiet in dtChiTiet.Rows)
                 {
-                    if (rowChiTiet["MaDonHang"].ToString() == maDon)
+                    if (rowChiTiet["MaDonHang"].ToString().Trim() == maDon)
                     {
                         dsChiTiet.Add(new
                         {
-                            MaHang = rowChiTiet["MaHangHoa"].ToString(),
+                            MaHang = rowChiTiet["MaHangHoa"].ToString().Trim(),
                             TenHang = rowChiTiet["TenHangHoa"].ToString(),
                             SoLuong = Convert.ToInt32(rowChiTiet["SoLuongDat"]),
                             DonGia = Convert.ToDecimal(rowChiTiet["DonGia"])
@@ -297,10 +301,10 @@ namespace N6_QLKHO
         {
             try
             {
-                if (value == null || value == DBNull.Value) return "0 ₫";
-                return Convert.ToDecimal(value).ToString("N0") + " ₫";
+                if (value == null || value == DBNull.Value) return "0 VND";
+                return Convert.ToDecimal(value).ToString("N0") + " VND";
             }
-            catch { return "0 ₫"; }
+            catch { return "0 VND"; }
         }
 
         protected static string LopTrangThai(object value)
