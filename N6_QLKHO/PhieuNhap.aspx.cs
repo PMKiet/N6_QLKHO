@@ -52,14 +52,14 @@ namespace N6_QLKHO
         private void LoadDropdownData()
         {
             ddlNhaCungCap.DataSource = DatabaseHelper.ExecuteQuery(
-                "SELECT MaNCC, MaNCC + N' - ' + TenNCC AS TenHienThi FROM NhaCungCap ORDER BY TenNCC");
+                "SELECT RTRIM(LTRIM(MaNCC)) AS MaNCC, RTRIM(LTRIM(MaNCC)) + N' - ' + TenNCC AS TenHienThi FROM NhaCungCap ORDER BY TenNCC");
             ddlNhaCungCap.DataTextField = "TenHienThi";
             ddlNhaCungCap.DataValueField = "MaNCC";
             ddlNhaCungCap.DataBind();
             ddlNhaCungCap.Items.Insert(0, new ListItem("-- Chọn đối tác cung cấp --", ""));
 
             ddlHangHoa.DataSource = DatabaseHelper.ExecuteQuery(
-                "SELECT MaHangHoa, MaHangHoa + N' - ' + TenHangHoa + N'  (' + DonViTinh + N')' AS TenHienThi FROM HangHoa ORDER BY MaHangHoa");
+                "SELECT RTRIM(LTRIM(MaHangHoa)) AS MaHangHoa, RTRIM(LTRIM(MaHangHoa)) + N' - ' + TenHangHoa + N'  (' + DonViTinh + N')' AS TenHienThi FROM HangHoa ORDER BY MaHangHoa");
             ddlHangHoa.DataTextField = "TenHienThi";
             ddlHangHoa.DataValueField = "MaHangHoa";
             ddlHangHoa.DataBind();
@@ -71,11 +71,11 @@ namespace N6_QLKHO
         {
             try
             {
-                DataTable dt = DatabaseHelper.ExecuteQuery("SELECT MaHangHoa, DonGia FROM HangHoa");
+                DataTable dt = DatabaseHelper.ExecuteQuery("SELECT RTRIM(LTRIM(MaHangHoa)) AS MaHangHoa, DonGia FROM HangHoa");
                 StringBuilder sb = new StringBuilder("var giaThamChieu = {");
                 foreach (DataRow r in dt.Rows)
                 {
-                    string ma = Convert.ToString(r["MaHangHoa"]).Replace("\\", "").Replace("'", "");
+                    string ma = Convert.ToString(r["MaHangHoa"]).Trim().Replace("\\", "").Replace("'", "");
                     decimal gia = Convert.ToDecimal(r["DonGia"]);
                     sb.Append("'").Append(ma).Append("':")
                       .Append(Math.Round(gia, 0).ToString("0", CultureInfo.InvariantCulture))
@@ -160,7 +160,7 @@ namespace N6_QLKHO
                     "<div class='text-secondary small fw-semibold'><i class='fa-solid fa-layer-group me-1 text-success'></i>Tổng hợp bảng kê: <strong>" + dt.Rows.Count + "</strong> mặt hàng &bull; <strong>" + tongSL.ToString("N0") + "</strong> sản phẩm</div>" +
                     "<div class='d-flex align-items-center gap-2'>" +
                     "<span class='text-secondary fw-semibold'>Tổng tiền tạm tính:</span>" +
-                    "<span class='fs-5 fw-bold text-success'>" + tongTien.ToString("N0") + " VND</span>" +
+                    "<span class='fs-5 fw-bold text-success tabular-nums'>" + tongTien.ToString("N0") + " VND</span>" +
                     "</div></div>";
             }
         }
