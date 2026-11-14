@@ -78,12 +78,14 @@ namespace N6_QLKHO
             StringBuilder q = new StringBuilder();
             if (nhap)
             {
-                q.Append("SELECT pn.MaPhieuNhap AS MaPhieu, pn.NgayNhap AS Ngay, ncc.TenNCC AS DoiTac, nd.HoTen AS NhanVien, pn.TrangThaiThanhToan, pn.TongTien ");
+                q.Append("SELECT pn.MaPhieuNhap AS MaPhieu, pn.NgayNhap AS Ngay, ncc.TenNCC AS DoiTac, nd.HoTen AS NhanVien, pn.TrangThaiThanhToan, " +
+                         "ISNULL((SELECT SUM(ct.SoLuongNhap * ct.DonGiaNhap) FROM ChiTietPhieuNhap ct WHERE ct.MaPhieuNhap = pn.MaPhieuNhap), pn.TongTien) AS TongTien ");
                 q.Append("FROM PhieuNhap pn JOIN NhaCungCap ncc ON pn.MaNCC = ncc.MaNCC JOIN NguoiDung nd ON pn.MaNhanVien = nd.MaNhanVien ");
             }
             else
             {
-                q.Append("SELECT px.MaPhieuXuat AS MaPhieu, px.NgayXuat AS Ngay, ISNULL(ddh.TenKhachHang, N'Khách lẻ / Trực tiếp') AS DoiTac, nd.HoTen AS NhanVien, px.TrangThaiThanhToan, px.TongTien ");
+                q.Append("SELECT px.MaPhieuXuat AS MaPhieu, px.NgayXuat AS Ngay, ISNULL(ddh.TenKhachHang, N'Khách lẻ / Trực tiếp') AS DoiTac, nd.HoTen AS NhanVien, px.TrangThaiThanhToan, " +
+                         "ISNULL((SELECT SUM(ct.SoLuongXuat * ct.DonGiaXuat) FROM ChiTietPhieuXuat ct WHERE ct.MaPhieuXuat = px.MaPhieuXuat), px.TongTien) AS TongTien ");
                 q.Append("FROM PhieuXuat px LEFT JOIN DonDatHang ddh ON px.MaDonHang = ddh.MaDonHang JOIN NguoiDung nd ON px.MaNhanVien = nd.MaNhanVien ");
             }
             q.Append("WHERE 1 = 1");
@@ -287,6 +289,13 @@ namespace N6_QLKHO
                 throw new NghiepVuException("Không tìm thấy phiếu " + ma + " (có thể đã bị xóa).");
 
             DataRow h = dauPhieu.Rows[0];
+            decimal tongChiTiet = 0m;
+            foreach (DataRow r in chiTiet.Rows)
+            {
+                tongChiTiet += Convert.ToDecimal(r["ThanhTien"]);
+            }
+            decimal tongTienHienThi = chiTiet.Rows.Count > 0 ? tongChiTiet : Convert.ToDecimal(h["TongTien"]);
+
             return new PhieuData
             {
                 Nhap = nhap,
@@ -295,7 +304,7 @@ namespace N6_QLKHO
                 DoiTac = Convert.ToString(h["DoiTac"]),
                 NhanVien = Convert.ToString(h["NhanVien"]),
                 TrangThai = Convert.ToString(h["TrangThaiThanhToan"]),
-                TongTien = Convert.ToDecimal(h["TongTien"]),
+                TongTien = tongTienHienThi,
                 ChiTiet = chiTiet
             };
         }
@@ -359,35 +368,35 @@ namespace N6_QLKHO
 
             // Bảng hàng hóa
             sb.Append("<div class='table-responsive'><table class='table table-bordered table-custom mb-0 align-middle'>");
-            sb.Append("<tr><th class='text-center'>STT</th><th>Mã Hàng</th><th>Tên Hàng Hóa</th><th>ĐVT</th>" +
-                      "<th class='text-end'>Số Lượng</th><th class='text-end'>Đơn Giá (VND)</th>" +
-                      (d.Nhap ? "<th class='text-center'>Hạn Dùng Lô</th>" : "") +
-                      "<th class='text-end'>Thành Tiền (VND)</th></tr>");
+            sb.Append("<thead><tr><th class='text-center col-nowrap'>STT</th><th class='col-nowrap'>Mã Hàng</th><th>Tên Hàng Hóa</th><th class='col-nowrap'>ĐVT</th>" +
+                      "<th class='text-end col-nowrap'>Số Lượng</th><th class='text-end col-nowrap'>Đơn Giá (VND)</th>" +
+                      (d.Nhap ? "<th class='text-center col-nowrap'>Hạn Dùng Lô</th>" : "") +
+                      "<th class='text-end col-nowrap'>Thành Tiền (VND)</th></tr></thead><tbody>");
 
             int stt = 0;
             foreach (DataRow r in d.ChiTiet.Rows)
             {
                 stt++;
                 sb.Append("<tr>");
-                sb.Append("<td class='text-center'>" + stt + "</td>");
-                sb.Append("<td class='col-nowrap'>" + Server.HtmlEncode(Convert.ToString(r["MaHangHoa"])) + "</td>");
+                sb.Append("<td class='text-center col-nowrap tabular-nums'>" + stt + "</td>");
+                sb.Append("<td class='col-nowrap fw-semibold'>" + Server.HtmlEncode(Convert.ToString(r["MaHangHoa"])) + "</td>");
                 sb.Append("<td>" + Server.HtmlEncode(Convert.ToString(r["TenHangHoa"])) + "</td>");
-                sb.Append("<td>" + Server.HtmlEncode(Convert.ToString(r["DonViTinh"])) + "</td>");
-                sb.Append("<td class='text-end'>" + Convert.ToInt32(r["SoLuong"]).ToString("N0") + "</td>");
-                sb.Append("<td class='text-end col-nowrap'>" + Convert.ToDecimal(r["DonGia"]).ToString("N0") + " VND</td>");
+                sb.Append("<td class='col-nowrap'>" + Server.HtmlEncode(Convert.ToString(r["DonViTinh"])) + "</td>");
+                sb.Append("<td class='text-end col-nowrap tabular-nums'>" + Convert.ToInt32(r["SoLuong"]).ToString("N0") + "</td>");
+                sb.Append("<td class='text-end col-nowrap tabular-nums'>" + Convert.ToDecimal(r["DonGia"]).ToString("N0") + " VND</td>");
                 if (d.Nhap)
-                    sb.Append("<td class='text-center col-nowrap'>" + Convert.ToDateTime(r["HanSuDungLo"]).ToString("dd/MM/yyyy") + "</td>");
-                sb.Append("<td class='text-end fw-semibold col-nowrap'>" + Convert.ToDecimal(r["ThanhTien"]).ToString("N0") + " VND</td>");
+                    sb.Append("<td class='text-center col-nowrap tabular-nums'>" + Convert.ToDateTime(r["HanSuDungLo"]).ToString("dd/MM/yyyy") + "</td>");
+                sb.Append("<td class='text-end fw-semibold col-nowrap tabular-nums'>" + Convert.ToDecimal(r["ThanhTien"]).ToString("N0") + " VND</td>");
                 sb.Append("</tr>");
             }
             if (d.ChiTiet.Rows.Count == 0)
                 sb.Append("<tr><td colspan='" + (d.Nhap ? 8 : 7) + "' class='text-center text-muted py-4'>Phiếu này chưa có chi tiết hàng hóa.</td></tr>");
-            sb.Append("</table></div>");
+            sb.Append("</tbody></table></div>");
 
             // Tổng tiền
             sb.Append("<div class='d-flex justify-content-end align-items-center gap-3 mt-3 pt-3 border-top'>" +
                       "<span class='text-secondary fw-semibold'>Tổng tiền thanh toán:</span>" +
-                      "<span class='fs-4 fw-bold " + (d.Nhap ? "text-success" : "text-primary") + "'>" + d.TongTien.ToString("N0") + " VND</span></div>");
+                      "<span class='fs-4 fw-bold tabular-nums " + (d.Nhap ? "text-success" : "text-primary") + "'>" + d.TongTien.ToString("N0") + " VND</span></div>");
 
             // Chữ ký
             sb.Append("<div class='row text-center mt-5 pt-3'>" +

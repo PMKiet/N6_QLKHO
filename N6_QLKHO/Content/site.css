@@ -1,0 +1,137 @@
+/* ==========================================================================
+   N6_QLKHO - DESIGN SYSTEM & GLOBAL STYLESHEET (Content/site.css)
+   Modern Minimalist Admin Dashboard - Light Theme
+   Synchronized with assets/css/main.css, components.css, responsive.css
+   ========================================================================== */
+
+@import url('../assets/css/main.css');
+@import url('../assets/css/components.css');
+@import url('../assets/css/responsive.css');
+
+:root {
+    --sidebar-width: 264px;
+    --header-height: 68px;
+
+    --bg-main: #F5F7FA;
+    --bg-body: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --bg-subtle: #F9FAFB;
+
+    --sidebar-bg: #111827;
+    --sidebar-brand-bg: #111827;
+    --sidebar-hover-bg: #1F2937;
+    --sidebar-active-bg: #2563EB;
+
+    --primary-color: #2563EB;
+    --primary-hover: #1D4ED8;
+    --primary-soft: #EFF6FF;
+    --primary-border: #BFDBFE;
+
+    --success-color: #059669;
+    --success-hover: #047857;
+    --success-soft: #ECFDF5;
+    --success-border: #A7F3D0;
+
+    --warning-color: #D97706;
+    --warning-hover: #B45309;
+    --warning-soft: #FFFBEB;
+    --warning-border: #FDE68A;
+
+    --danger-color: #DC2626;
+    --danger-hover: #B91C1C;
+    --danger-soft: #FEF2F2;
+    --danger-border: #FECACA;
+
+    --info-color: #2563EB;
+    --info-hover: #1D4ED8;
+    --info-soft: #EFF6FF;
+    --info-border: #BFDBFE;
+
+    --indigo-color: #2563EB;
+    --indigo-soft: #EFF6FF;
+
+    --text-main: #1F2937;
+    --text-body: #1F2937;
+    --text-secondary: #6B7280;
+    --text-muted: #6B7280;
+    --text-sidebar: #D1D5DB;
+    --text-sidebar-muted: #9CA3AF;
+
+    --border-color: #E5E7EB;
+    --border-input: #E5E7EB;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.04);
+    --shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06);
+    --shadow-md: 0 4px 12px rgba(17, 24, 39, 0.08);
+    --shadow-lg: 0 12px 24px -4px rgba(17, 24, 39, 0.12);
+
+    --wms-accent: #2563EB;
+    --wms-accent-dark: #1D4ED8;
+    --wms-accent-soft: #EFF6FF;
+    --wms-accent-border: #BFDBFE;
+    --wms-slate-900: #1F2937;
+    --wms-slate-700: #374151;
+    --wms-slate-500: #6B7280;
+    --wms-border: #E5E7EB;
+}
+
+/* Modal Minimalist Light Header & Close Button Safeguard */
+.modal-header,
+.modal-header-modern {
+    background: #FFFFFF !important;
+    color: #1F2937 !important;
+    border-bottom: 1px solid #E5E7EB !important;
+    padding: 18px 24px;
+}
+
+.modal-title,
+.modal-header .modal-title,
+.modal-header-modern .modal-title {
+    color: #1F2937 !important;
+    font-weight: 600;
+}
+
+.modal-header .btn-close,
+.modal-header-modern .btn-close,
+.modal-header .btn-close-white,
+.modal-header-modern .btn-close-white {
+    filter: none !important;
+    opacity: 0.65;
+}
+
+.modal-header .btn-close:hover,
+.modal-header-modern .btn-close:hover,
+.modal-header .btn-close-white:hover,
+.modal-header-modern .btn-close-white:hover {
+    opacity: 1;
+}
+
+/* Table Column Alignment Safeguard */
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+.table-custom th.text-end,
+.table-custom td.text-end,
+.table-custom th[align="right"],
+.table-custom td[align="right"],
+.nd-table th.text-end,
+.nd-table td.text-end,
+.nd-table th[align="right"],
+.nd-table td[align="right"] {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.table-custom th.text-center,
+.table-custom td.text-center,
+.table-custom th[align="center"],
+.table-custom td[align="center"],
+.nd-table th.text-center,
+.nd-table td.text-center,
+.nd-table th[align="center"],
+.nd-table td[align="center"] {
+    text-align: center !important;
+}

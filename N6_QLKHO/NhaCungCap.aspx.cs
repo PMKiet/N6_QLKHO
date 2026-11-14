@@ -54,12 +54,28 @@ namespace N6_QLKHO
             ScriptManager.RegisterStartupScript(this, this.GetType(), key, script, true);
         }
 
+        // Kích hoạt hiển thị hộp thoại Modal Thêm nhà cung cấp trên giao diện
+        private void MoModalThem()
+        {
+            ChayScriptSauKhiTaiTrang("PopModalThem",
+                "var el = document.getElementById('modalThemNCC');" +
+                "if (el && window.bootstrap) { bootstrap.Modal.getOrCreateInstance(el).show(); }");
+        }
+
+        // Ẩn/Đóng hộp thoại Modal Thêm
+        private void DongModalThem()
+        {
+            ChayScriptSauKhiTaiTrang("HideModalThem",
+                "var el = document.getElementById('modalThemNCC');" +
+                "if (el && window.bootstrap) { var m = bootstrap.Modal.getInstance(el); if (m) { m.hide(); } }");
+        }
+
         // Kích hoạt hiển thị hộp thoại Modal Sửa nhà cung cấp trên giao diện
         private void MoModalSua()
         {
             ChayScriptSauKhiTaiTrang("PopModal",
                 "var el = document.getElementById('modalSuaNCC');" +
-                "if (el && window.bootstrap) { new bootstrap.Modal(el).show(); }");
+                "if (el && window.bootstrap) { bootstrap.Modal.getOrCreateInstance(el).show(); }");
         }
 
         // Ẩn/Đóng hộp thoại Modal Sửa (đảm bảo an toàn tuyệt đối ngay cả khi Modal chưa từng được mở)
@@ -76,7 +92,7 @@ namespace N6_QLKHO
         // Nạp danh sách nhà cung cấp lên GridView (có hỗ trợ lọc theo từ khóa tìm kiếm)
         private void BindGrid(string keyword = "")
         {
-            string query = "SELECT MaNCC, TenNCC, DiaChi, SoDienThoai, Email FROM NhaCungCap";
+            string query = "SELECT RTRIM(LTRIM(MaNCC)) AS MaNCC, TenNCC, DiaChi, SoDienThoai, Email FROM NhaCungCap";
             SqlParameter[] parameters = null;
 
             if (!string.IsNullOrEmpty(keyword))
@@ -87,6 +103,8 @@ namespace N6_QLKHO
                     new SqlParameter("@kw", "%" + keyword + "%")
                 };
             }
+
+            query += " ORDER BY MaNCC";
 
             gvNhaCungCap.DataSource = DatabaseHelper.ExecuteQuery(query, parameters);
             gvNhaCungCap.DataBind();
@@ -119,6 +137,7 @@ namespace N6_QLKHO
             if (string.IsNullOrEmpty(maNCC) || string.IsNullOrEmpty(tenNCC) || string.IsNullOrEmpty(sdt))
             {
                 HienThiThongBao("Vui lòng điền đầy đủ các thông tin bắt buộc (*)", "danger");
+                MoModalThem();
                 return;
             }
 
@@ -126,11 +145,22 @@ namespace N6_QLKHO
             if (!RegexSDT.IsMatch(sdt))
             {
                 HienThiThongBao("Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 hoặc 11 chữ số (không chứa chữ cái).", "danger");
+                MoModalThem();
                 return;
             }
 
             try
             {
+                object checkCount = DatabaseHelper.ExecuteScalar(
+                    "SELECT COUNT(1) FROM NhaCungCap WHERE RTRIM(LTRIM(MaNCC)) = @Ma",
+                    new SqlParameter[] { new SqlParameter("@Ma", maNCC) });
+                if (Convert.ToInt32(checkCount) > 0)
+                {
+                    HienThiThongBao("Mã nhà cung cấp \"" + maNCC + "\" đã tồn tại trong hệ thống!", "danger");
+                    MoModalThem();
+                    return;
+                }
+
                 string query = "INSERT INTO NhaCungCap (MaNCC, TenNCC, DiaChi, SoDienThoai, Email) VALUES (@Ma, @Ten, @DiaChi, @SDT, @Email)";
                 SqlParameter[] parameters = new SqlParameter[]
                 {
@@ -142,7 +172,7 @@ namespace N6_QLKHO
                 };
 
                 DatabaseHelper.ExecuteNonQuery(query, parameters);
-                HienThiThongBao("Thêm nhà cung cấp thành công!", "success");
+                HienThiThongBao("Thêm nhà cung cấp " + maNCC + " thành công!", "success");
 
                 // Xóa sạch các ô nhập liệu sau khi thêm mới thành công
                 txtMaNCC.Text = "";
@@ -151,11 +181,13 @@ namespace N6_QLKHO
                 txtEmail.Text = "";
                 txtDiaChi.Text = "";
 
-                BindGrid(); // Tải lại danh sách trên bảng
+                DongModalThem();
+                BindGrid(txtSearch.Text.Trim()); // Tải lại danh sách trên bảng
             }
             catch (Exception ex)
             {
-                HienThiThongBao("Lỗi khi thêm nhà cung cấp (Có thể trùng mã): " + ex.Message, "danger");
+                HienThiThongBao("Lỗi khi thêm nhà cung cấp: " + DatabaseHelper.LayThongBaoLoi(ex), "danger");
+                MoModalThem();
             }
         }
         // =====================================================================
@@ -166,39 +198,39 @@ namespace N6_QLKHO
             if (e.CommandName == "EditItem")
             {
                 // Khi bấm nút Sửa (icon bút): lấy mã nhà cung cấp, truy vấn lấy thông tin cũ đổ vào modal sửa rồi mở modal lên
-                string maNCC = e.CommandArgument.ToString();
-                string query = "SELECT * FROM NhaCungCap WHERE MaNCC = @Ma";
+                string maNCC = Convert.ToString(e.CommandArgument).Trim();
+                string query = "SELECT * FROM NhaCungCap WHERE RTRIM(LTRIM(MaNCC)) = @Ma";
                 SqlParameter[] parameters = new SqlParameter[] { new SqlParameter("@Ma", maNCC) };
 
                 DataTable dt = DatabaseHelper.ExecuteQuery(query, parameters);
                 if (dt.Rows.Count > 0)
                 {
                     DataRow row = dt.Rows[0];
-                    txtSuaMaNCC.Text = row["MaNCC"].ToString();
-                    txtSuaTenNCC.Text = row["TenNCC"].ToString();
-                    txtSuaSoDienThoai.Text = row["SoDienThoai"].ToString();
-                    txtSuaEmail.Text = row["Email"].ToString();
-                    txtSuaDiaChi.Text = row["DiaChi"].ToString();
+                    txtSuaMaNCC.Text = Convert.ToString(row["MaNCC"]).Trim();
+                    txtSuaTenNCC.Text = Convert.ToString(row["TenNCC"]);
+                    txtSuaSoDienThoai.Text = Convert.ToString(row["SoDienThoai"]);
+                    txtSuaEmail.Text = Convert.ToString(row["Email"]);
+                    txtSuaDiaChi.Text = Convert.ToString(row["DiaChi"]);
 
                     MoModalSua(); // Hiển thị Modal Sửa lên màn hình
                 }
                 else
                 {
                     HienThiThongBao("Nhà cung cấp " + maNCC + " không còn tồn tại (có thể đã bị xóa).", "danger");
-                    BindGrid();
+                    BindGrid(txtSearch.Text.Trim());
                 }
             }
             else if (e.CommandName == "DeleteItem")
             {
                 // Khi bấm nút Xóa (icon thùng rác): thực hiện xóa nhà cung cấp theo mã tương ứng
-                string maNCC = e.CommandArgument.ToString();
+                string maNCC = Convert.ToString(e.CommandArgument).Trim();
                 try
                 {
-                    string query = "DELETE FROM NhaCungCap WHERE MaNCC = @Ma";
+                    string query = "DELETE FROM NhaCungCap WHERE RTRIM(LTRIM(MaNCC)) = @Ma";
                     SqlParameter[] parameters = new SqlParameter[] { new SqlParameter("@Ma", maNCC) };
                     DatabaseHelper.ExecuteNonQuery(query, parameters);
-                    HienThiThongBao("Đã xóa nhà cung cấp thành công!", "success");
-                    BindGrid();
+                    HienThiThongBao("Đã xóa nhà cung cấp " + maNCC + " thành công!", "success");
+                    BindGrid(txtSearch.Text.Trim());
                 }
                 catch (Exception)
                 {
@@ -236,7 +268,7 @@ namespace N6_QLKHO
 
             try
             {
-                string query = "UPDATE NhaCungCap SET TenNCC = @Ten, DiaChi = @DiaChi, SoDienThoai = @SDT, Email = @Email WHERE MaNCC = @Ma";
+                string query = "UPDATE NhaCungCap SET TenNCC = @Ten, DiaChi = @DiaChi, SoDienThoai = @SDT, Email = @Email WHERE RTRIM(LTRIM(MaNCC)) = @Ma";
                 SqlParameter[] parameters = new SqlParameter[]
                 {
                     new SqlParameter("@Ma", maNCC),
@@ -247,14 +279,14 @@ namespace N6_QLKHO
                 };
 
                 DatabaseHelper.ExecuteNonQuery(query, parameters);
-                HienThiThongBao("Cập nhật thông tin nhà cung cấp thành công!", "success");
-                BindGrid();
+                HienThiThongBao("Cập nhật thông tin nhà cung cấp " + maNCC + " thành công!", "success");
+                BindGrid(txtSearch.Text.Trim());
 
                 DongModalSua(); // Đóng Modal Sửa sau khi cập nhật thành công
             }
             catch (Exception ex)
             {
-                HienThiThongBao("Lỗi khi cập nhật nhà cung cấp: " + ex.Message, "danger");
+                HienThiThongBao("Lỗi khi cập nhật nhà cung cấp: " + DatabaseHelper.LayThongBaoLoi(ex), "danger");
                 MoModalSua(); // Giữ modal mở nếu xảy ra lỗi ngoại lệ CSDL
             }
         }
@@ -265,7 +297,7 @@ namespace N6_QLKHO
         protected void btnLamMoiSua_Click(object sender, EventArgs e)
         {
             string maNCC = txtSuaMaNCC.Text.Trim();
-            string query = "SELECT * FROM NhaCungCap WHERE MaNCC = @Ma";
+            string query = "SELECT * FROM NhaCungCap WHERE RTRIM(LTRIM(MaNCC)) = @Ma";
             SqlParameter[] parameters = new SqlParameter[] { new SqlParameter("@Ma", maNCC) };
             DataTable dt = DatabaseHelper.ExecuteQuery(query, parameters);
 

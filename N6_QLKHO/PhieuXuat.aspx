@@ -1,173 +1,6 @@
 <%@ Page Title="Lập Phiếu Xuất Kho" Language="C#" MasterPageFile="~/Site.Master" ResponseEncoding="utf-8" ContentType="text/html; charset=utf-8" AutoEventWireup="true" CodeBehind="PhieuXuat.aspx.cs" Inherits="N6_QLKHO.PhieuXuat" %>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-    <style>
-        .wms-shell {
-            --wms-accent: #2563eb;
-            --wms-accent-dark: #1d4ed8;
-            --wms-accent-soft: #eff6ff;
-            --wms-accent-border: #bfdbfe;
-            --wms-slate-900: #0f172a;
-            --wms-slate-700: #334155;
-            --wms-slate-500: #64748b;
-            --wms-border: #e2e8f0;
-        }
-        .wms-topbar {
-            background: #ffffff;
-            border: 1px solid var(--wms-border);
-            border-radius: 16px;
-            padding: 18px 24px;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        }
-        .page-icon {
-            width: 50px; height: 50px; border-radius: 14px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: #ffffff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.35rem; flex-shrink: 0;
-            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
-        }
-        .wms-stepper {
-            display: inline-flex; align-items: center; gap: 10px;
-            background: #f8fafc; border: 1px solid var(--wms-border);
-            border-radius: 999px; padding: 6px 14px; font-size: 0.8rem; font-weight: 600;
-        }
-        .wms-step-dot {
-            width: 22px; height: 22px; border-radius: 50%;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 0.72rem; font-weight: 700;
-        }
-        .wms-step-active { background: var(--wms-accent); color: #ffffff; }
-        .wms-step-muted { background: #e2e8f0; color: #64748b; }
-        .wms-card {
-            background: #ffffff;
-            border: 1px solid var(--wms-border);
-            border-radius: 16px;
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
-            overflow: hidden;
-        }
-        .wms-card-header {
-            background: #ffffff;
-            border-bottom: 1px solid #f1f5f9;
-            padding: 16px 24px;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .section-title {
-            font-size: 0.95rem; font-weight: 700; color: var(--wms-slate-900);
-            margin: 0; display: flex; align-items: center; gap: 10px;
-        }
-        .section-title i {
-            width: 30px; height: 30px; border-radius: 8px;
-            background: var(--wms-accent-soft); color: var(--wms-accent);
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 0.85rem;
-        }
-        .form-label-wms {
-            font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.4px; color: #475569; margin-bottom: 6px;
-        }
-        .input-group-text {
-            background: #f8fafc; color: #475569; border-color: #cbd5e1; font-weight: 600;
-        }
-        .currency-suffix {
-            background: var(--wms-accent-soft) !important;
-            color: var(--wms-accent-dark) !important;
-            font-weight: 700 !important;
-            font-size: 0.78rem;
-            letter-spacing: 0.5px;
-        }
-        .form-control, .form-select {
-            border-color: #cbd5e1;
-            font-size: 0.92rem;
-            padding-top: 0.52rem;
-            padding-bottom: 0.52rem;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--wms-accent);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
-        }
-        .readonly-user {
-            background-color: #f8fafc !important;
-            color: #0f172a !important;
-            font-weight: 600;
-        }
-        .entry-toolbar {
-            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 1px solid #cbd5e1;
-            border-left: 4px solid var(--wms-accent);
-            border-radius: 14px;
-            padding: 18px;
-        }
-        .quick-price-pill {
-            font-size: 0.72rem; font-weight: 600; padding: 2px 8px;
-            border-radius: 6px; border: 1px solid #cbd5e1;
-            background: #ffffff; color: #475569; cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .quick-price-pill:hover {
-            border-color: var(--wms-accent); color: var(--wms-accent); background: var(--wms-accent-soft);
-        }
-        .table-custom { margin-bottom: 0; }
-        .table-custom thead th {
-            background-color: #f8fafc;
-            color: #475569;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.73rem;
-            letter-spacing: 0.5px;
-            padding: 13px 16px;
-            border-bottom: 2px solid #e2e8f0;
-            white-space: nowrap;
-        }
-        .table-custom tbody td {
-            padding: 14px 16px;
-            color: #1e293b;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .sku-badge {
-            font-family: Consolas, Monaco, monospace;
-            font-size: 0.8rem; font-weight: 700;
-            background: #f1f5f9; color: #334155;
-            padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0;
-        }
-        .summary-footer-bar {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px 20px;
-        }
-        .form-control.is-invalid, .form-select.is-invalid { background-image: none; }
-        .btn[disabled] { cursor: not-allowed; }
-        /* ===== IN PHIẾU (dùng chung: Phiếu nhập / Phiếu xuất / Lịch sử kho) ===== */
-        @page { size: A4 portrait; margin: 0; } /* margin 0 => trình duyệt không chèn ngày giờ + URL ở đầu/cuối trang */
-        @media print {
-            html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; margin: 0 !important; background: #fff !important; }
-            /* Bỏ hẳn mọi thứ ngoài phiếu khỏi luồng in => không còn trang trắng thừa */
-            body *:not(.phieu-in):not(.phieu-in *):not(:has(.phieu-in)) { display: none !important; }
-            .no-print { display: none !important; }
-
-            .phieu-in {
-                position: absolute; left: 0; top: 0; width: 100%; box-sizing: border-box;
-                margin: 0 !important; padding: 14mm 14mm 12mm !important;
-                background: #fff !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
-                color: #111827 !important; font-size: 11pt;
-                -webkit-print-color-adjust: exact; print-color-adjust: exact;
-            }
-            .phieu-in .card-body { padding: 0 !important; }
-            .phieu-in .text-primary, .phieu-in .text-success { color: #111827 !important; }
-            .phieu-in .bg-light { background: #fff !important; border: 1px solid #94a3b8 !important; border-radius: 6px !important; }
-            .phieu-in .badge, .phieu-in .pay-badge { background: #fff !important; color: #111827 !important; border: 1px solid #475569 !important; }
-
-            /* Bảng: không cuộn ngang, có viền rõ, tự xuống dòng */
-            .phieu-in .table-responsive { overflow: visible !important; }
-            .phieu-in table { width: 100% !important; border-collapse: collapse !important; font-size: 10pt; }
-            .phieu-in th, .phieu-in td { border: 1px solid #475569 !important; padding: 5px 7px !important; background: transparent !important; color: #111827 !important; vertical-align: middle; }
-            .phieu-in th { background: #e5e7eb !important; font-weight: 700; text-transform: none; }
-            .phieu-in tr, .phieu-in .row.text-center { page-break-inside: avoid; break-inside: avoid; }
-            .phieu-in .col-nowrap { white-space: nowrap; }
-        }
-        .phieu-in .sig-space { height: 80px; }
-    </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
@@ -178,11 +11,11 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="page-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                 <div>
-                    <div class="d-flex align-items-center gap-2">
-                        <h4 class="fw-bold text-dark mb-0">Lập Phiếu Xuất Kho</h4>
-                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">Mẫu 02-VT</span>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h4 class="page-title mb-0">Lập Phiếu Xuất Kho</h4>
+                        <span class="badge badge-soft-primary">Mẫu 02-VT</span>
                     </div>
-                    <p class="text-muted small mb-0 mt-1">Tạo phiếu xuất theo đơn hàng hoặc xuất trực tiếp &bull; Trừ tồn kho tự động theo nguyên tắc FEFO</p>
+                    <p class="page-subtitle mt-1">Tạo phiếu xuất theo đơn hàng hoặc xuất trực tiếp &bull; Trừ tồn kho tự động theo nguyên tắc FEFO</p>
                 </div>
             </div>
             <div class="wms-stepper">
@@ -268,7 +101,7 @@
                         <i class="fa-solid fa-dolly"></i>
                         <span>Bảng Kê Chi Tiết Hàng Xuất Kho</span>
                     </h5>
-                    <span class="badge bg-light text-secondary border">Đơn giá tối thiểu: 1.000 VND</span>
+                    <span class="badge badge-soft-secondary">Đơn giá tối thiểu: 1.000 VND</span>
                 </div>
                 <div class="card-body p-4">
                     <!-- Thanh thêm nhanh dòng hàng -->
@@ -312,14 +145,14 @@
 
                     <!-- Bảng danh sách tạm -->
                     <div class="table-responsive border rounded-3">
-                        <asp:GridView ID="gvChiTietPhieuXuat" runat="server" CssClass="table table-custom table-hover align-middle" AutoGenerateColumns="false" GridLines="None" OnRowCommand="gvChiTietPhieuXuat_RowCommand">
+                        <asp:GridView ID="gvChiTietPhieuXuat" runat="server" CssClass="table table-custom table-hover align-middle mb-0" AutoGenerateColumns="false" GridLines="None" OnRowCommand="gvChiTietPhieuXuat_RowCommand">
                             <Columns>
-                                <asp:TemplateField HeaderText="STT" ItemStyle-Width="60px" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="STT" ItemStyle-Width="60px" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center col-nowrap" ItemStyle-CssClass="text-center col-nowrap tabular-nums">
                                     <ItemTemplate>
-                                        <span class="text-muted fw-semibold"><%# Container.DataItemIndex + 1 %></span>
+                                        <span class="text-muted fw-semibold tabular-nums"><%# Container.DataItemIndex + 1 %></span>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:TemplateField HeaderText="Mã Hàng" ItemStyle-Width="130px">
+                                <asp:TemplateField HeaderText="Mã Hàng" ItemStyle-Width="130px" HeaderStyle-CssClass="col-nowrap" ItemStyle-CssClass="col-nowrap">
                                     <ItemTemplate>
                                         <span class="sku-badge"><%# Server.HtmlEncode(Convert.ToString(Eval("MaHangHoa"))) %></span>
                                     </ItemTemplate>
@@ -329,20 +162,20 @@
                                         <span class="fw-semibold text-dark"><%# Server.HtmlEncode(Convert.ToString(Eval("TenHangHoa"))) %></span>
                                     </ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:BoundField DataField="SoLuongXuat" HeaderText="Số Lượng" DataFormatString="{0:N0}" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" ItemStyle-CssClass="fw-semibold" />
-                                <asp:BoundField DataField="DonGiaXuat" HeaderText="Đơn Giá (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" />
-                                <asp:BoundField DataField="ThanhTien" HeaderText="Thành Tiền (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" ItemStyle-CssClass="fw-bold text-primary" />
-                                <asp:TemplateField HeaderText="Thao Tác" ItemStyle-Width="90px" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center">
+                                <asp:BoundField DataField="SoLuongXuat" HeaderText="Số Lượng" DataFormatString="{0:N0}" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-end col-nowrap" ItemStyle-CssClass="text-end fw-semibold col-nowrap tabular-nums" />
+                                <asp:BoundField DataField="DonGiaXuat" HeaderText="Đơn Giá (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-end col-nowrap" ItemStyle-CssClass="text-end col-nowrap tabular-nums" />
+                                <asp:BoundField DataField="ThanhTien" HeaderText="Thành Tiền (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-end col-nowrap" ItemStyle-CssClass="text-end fw-bold text-primary col-nowrap tabular-nums" />
+                                <asp:TemplateField HeaderText="Thao Tác" ItemStyle-Width="90px" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center col-nowrap" ItemStyle-CssClass="text-center col-nowrap">
                                     <ItemTemplate>
-                                        <asp:LinkButton ID="btnXoaDong" runat="server" CommandName="XoaDong" CommandArgument='<%# Container.DataItemIndex %>' CssClass="btn btn-sm btn-outline-danger border-0" title="Xóa dòng" OnClientClick="return confirm('Xóa dòng hàng này khỏi phiếu xuất?');">
+                                        <asp:LinkButton ID="btnXoaDong" runat="server" CommandName="XoaDong" CommandArgument='<%# Container.DataItemIndex %>' CssClass="btn-action-icon delete" title="Xóa dòng" OnClientClick="return confirm('Xóa dòng hàng này khỏi phiếu xuất?');">
                                             <i class="fa-regular fa-trash-can"></i>
                                         </asp:LinkButton>
                                     </ItemTemplate>
                                 </asp:TemplateField>
                             </Columns>
                             <EmptyDataTemplate>
-                                <div class="text-center py-5 text-muted">
-                                    <div class="mb-2"><i class="fa-solid fa-basket-shopping fs-1 text-secondary opacity-50"></i></div>
+                                <div class="empty-state">
+                                    <div class="empty-state-icon"><i class="fa-solid fa-basket-shopping"></i></div>
                                     <div class="fw-semibold text-dark">Chưa có dòng hàng hóa nào trong phiếu</div>
                                     <p class="small mb-0 mt-1">Chọn mặt hàng, nhập số lượng và đơn giá (tối thiểu 1.000 VND) rồi bấm <strong>+ Thêm dòng</strong>.</p>
                                 </div>
@@ -355,7 +188,7 @@
             </div>
 
             <!-- NÚT XEM TRƯỚC -->
-            <div class="d-flex justify-content-end mb-5">
+            <div class="d-flex justify-content-end mb-4">
                 <asp:Button ID="btnXemTruoc" runat="server" Text="Tiếp tục: Xem trước phiếu xuất →" CssClass="btn btn-primary btn-lg px-5 shadow-sm fw-bold" OnClick="btnXemTruoc_Click" />
             </div>
 
@@ -407,21 +240,21 @@
                     <div class="table-responsive">
                         <asp:GridView ID="gvXemTruoc" runat="server" CssClass="table table-bordered table-custom mb-0 align-middle" AutoGenerateColumns="false" GridLines="None">
                             <Columns>
-                                <asp:TemplateField HeaderText="STT" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center">
+                                <asp:TemplateField HeaderText="STT" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" HeaderStyle-CssClass="text-center col-nowrap" ItemStyle-CssClass="text-center col-nowrap tabular-nums">
                                     <ItemTemplate><%# Container.DataItemIndex + 1 %></ItemTemplate>
                                 </asp:TemplateField>
-                                <asp:BoundField DataField="MaHangHoa" HeaderText="Mã Hàng" />
+                                <asp:BoundField DataField="MaHangHoa" HeaderText="Mã Hàng" HeaderStyle-CssClass="col-nowrap" ItemStyle-CssClass="col-nowrap fw-semibold" />
                                 <asp:BoundField DataField="TenHangHoa" HeaderText="Tên Hàng Hóa" />
-                                <asp:BoundField DataField="SoLuongXuat" HeaderText="Số Lượng" DataFormatString="{0:N0}" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" />
-                                <asp:BoundField DataField="DonGiaXuat" HeaderText="Đơn Giá (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" />
-                                <asp:BoundField DataField="ThanhTien" HeaderText="Thành Tiền (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" ItemStyle-CssClass="fw-semibold" />
+                                <asp:BoundField DataField="SoLuongXuat" HeaderText="Số Lượng" DataFormatString="{0:N0}" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-end col-nowrap" ItemStyle-CssClass="text-end col-nowrap tabular-nums" />
+                                <asp:BoundField DataField="DonGiaXuat" HeaderText="Đơn Giá (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-end col-nowrap" ItemStyle-CssClass="text-end col-nowrap tabular-nums" />
+                                <asp:BoundField DataField="ThanhTien" HeaderText="Thành Tiền (VND)" DataFormatString="{0:N0} VND" ItemStyle-HorizontalAlign="Right" HeaderStyle-HorizontalAlign="Right" HeaderStyle-CssClass="text-end col-nowrap" ItemStyle-CssClass="text-end fw-semibold col-nowrap tabular-nums" />
                             </Columns>
                         </asp:GridView>
                     </div>
 
                     <div class="d-flex justify-content-end align-items-center gap-3 mt-3 pt-3 border-top">
                         <span class="text-secondary fw-semibold">Tổng tiền thanh toán:</span>
-                        <span class="fs-4 fw-bold text-primary"><asp:Literal ID="litTongTienXemTruoc" runat="server"></asp:Literal></span>
+                        <span class="fs-4 fw-bold text-primary tabular-nums"><asp:Literal ID="litTongTienXemTruoc" runat="server"></asp:Literal></span>
                     </div>
 
                     <div class="row text-center mt-5 pt-3">
@@ -443,7 +276,7 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mb-5 no-print">
+            <div class="d-flex justify-content-end gap-2 mb-4 no-print">
                 <asp:Button ID="btnQuayLai" runat="server" Text="← Quay lại chỉnh sửa" CssClass="btn btn-outline-secondary btn-lg px-4 fw-semibold" OnClick="btnQuayLai_Click" CausesValidation="false" />
                 <asp:Button ID="btnLuuPhieuXuat" runat="server" Text="Xác nhận lập phiếu xuất" CssClass="btn btn-primary btn-lg px-5 shadow-sm fw-bold" OnClick="btnLuuPhieuXuat_Click" UseSubmitBehavior="false" OnClientClick="this.disabled = true; this.value = 'Đang lưu...';" />
             </div>
@@ -551,9 +384,12 @@
             };
 
             window.chonHang = function () {
-                var ma = $(ID_HH).value;
+                var ma = $(ID_HH).value ? $(ID_HH).value.trim() : '';
                 if (ma && typeof giaMacDinh !== 'undefined' && giaMacDinh[ma] !== undefined) {
                     $(ID_GIA).value = giaMacDinh[ma];
+                    capNhatPreviewGia();
+                } else if (!ma) {
+                    $(ID_GIA).value = '';
                     capNhatPreviewGia();
                 }
             };

@@ -1,0 +1,803 @@
+/* ==========================================================================
+   N6_QLKHO - MAIN STYLESHEET (assets/css/main.css)
+   Modern Minimalist Admin Dashboard - Light Theme
+   Includes: CSS Variables, Reset, Typography (Inter), Sidebar, Header,
+             Breadcrumb, Main Layout, Footer, Login & Print Layout
+   ========================================================================== */
+
+:root {
+    /* Layout Dimensions */
+    --sidebar-width: 264px;
+    --header-height: 68px;
+
+    /* Modern Minimalist Palette (Light Theme) */
+    --bg-main: #F5F7FA;
+    --bg-body: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --bg-subtle: #F9FAFB;
+
+    --sidebar-bg: #111827;
+    --sidebar-brand-bg: #111827;
+    --sidebar-hover-bg: #1F2937;
+    --sidebar-active-bg: #2563EB;
+
+    /* Primary & Semantic Colors */
+    --primary-color: #2563EB;
+    --primary-hover: #1D4ED8;
+    --primary-soft: #EFF6FF;
+    --primary-border: #BFDBFE;
+
+    --success-color: #059669;
+    --success-hover: #047857;
+    --success-soft: #ECFDF5;
+    --success-border: #A7F3D0;
+
+    --warning-color: #D97706;
+    --warning-hover: #B45309;
+    --warning-soft: #FFFBEB;
+    --warning-border: #FDE68A;
+
+    --danger-color: #DC2626;
+    --danger-hover: #B91C1C;
+    --danger-soft: #FEF2F2;
+    --danger-border: #FECACA;
+
+    --info-color: #2563EB;
+    --info-hover: #1D4ED8;
+    --info-soft: #EFF6FF;
+    --info-border: #BFDBFE;
+
+    --indigo-color: #2563EB;
+    --indigo-soft: #EFF6FF;
+
+    /* Typography Colors */
+    --text-main: #1F2937;
+    --text-body: #1F2937;
+    --text-secondary: #6B7280;
+    --text-muted: #6B7280;
+    --text-sidebar: #D1D5DB;
+    --text-sidebar-muted: #9CA3AF;
+
+    /* Borders, Radius & Minimalist Shadows */
+    --border-color: #E5E7EB;
+    --border-input: #E5E7EB;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.04);
+    --shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06);
+    --shadow-md: 0 4px 12px rgba(17, 24, 39, 0.08);
+    --shadow-lg: 0 12px 24px -4px rgba(17, 24, 39, 0.12);
+
+    /* WMS Shell Unified Variables */
+    --wms-accent: #2563EB;
+    --wms-accent-dark: #1D4ED8;
+    --wms-accent-soft: #EFF6FF;
+    --wms-accent-border: #BFDBFE;
+    --wms-slate-900: #1F2937;
+    --wms-slate-700: #374151;
+    --wms-slate-500: #6B7280;
+    --wms-border: #E5E7EB;
+}
+
+/* ==========================================================================
+   1. RESET & BASE TYPOGRAPHY
+   ========================================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    overflow-x: hidden;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-main);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+a {
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.icon-indigo {
+    color: var(--primary-color) !important;
+}
+
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   2. SIDEBAR NAVIGATION
+   ========================================================================== */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    transition: transform 0.25s ease, width 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #1F2937;
+}
+
+.sidebar .brand {
+    padding: 18px 20px;
+    background-color: var(--sidebar-brand-bg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.brand-logo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background-color: var(--primary-color);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.brand-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: 0.3px;
+}
+
+.brand-pro-badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: var(--primary-color);
+    color: #FFFFFF;
+    letter-spacing: 0.3px;
+}
+
+.brand-subtitle {
+    color: var(--text-sidebar-muted);
+    font-size: 0.75rem;
+    display: block;
+}
+
+.sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 12px 24px 12px;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 4px;
+}
+
+.sidebar .menu-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 12px 6px 12px;
+    color: var(--text-sidebar-muted);
+    font-weight: 600;
+}
+
+.sidebar .nav-link {
+    color: var(--text-sidebar);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar .nav-link:hover {
+    color: #FFFFFF;
+    background-color: var(--sidebar-hover-bg);
+}
+
+.sidebar .nav-link.active {
+    color: #FFFFFF !important;
+    background-color: var(--sidebar-active-bg);
+    font-weight: 600;
+}
+
+.sidebar .nav-link.active i,
+.sidebar .nav-link.active i.main-icon {
+    color: #FFFFFF !important;
+    opacity: 1 !important;
+}
+
+.sidebar .nav-link .menu-icon-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar .nav-link i.main-icon {
+    font-size: 0.95rem;
+    width: 20px;
+    text-align: center;
+    color: var(--text-sidebar-muted) !important;
+    transition: color 0.15s ease;
+}
+
+.sidebar .nav-link:hover i.main-icon {
+    color: #FFFFFF !important;
+}
+
+.sidebar .submenu {
+    list-style: none;
+    margin: 2px 0 4px 0;
+    padding: 4px 0;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+}
+
+.sidebar .submenu .nav-link {
+    padding: 8px 12px 8px 40px;
+    font-size: 0.84rem;
+    color: var(--text-sidebar);
+    background-color: transparent;
+    margin-bottom: 1px;
+    justify-content: flex-start;
+}
+
+.sidebar .submenu .nav-link:hover {
+    color: #FFFFFF;
+    background-color: var(--sidebar-hover-bg);
+}
+
+.sidebar .submenu .nav-link.active {
+    background-color: var(--sidebar-active-bg);
+    color: #FFFFFF !important;
+    font-weight: 600;
+}
+
+.nav-link .fa-chevron-down {
+    transition: transform 0.2s ease;
+    font-size: 0.7rem;
+    color: var(--text-sidebar-muted);
+}
+
+.nav-link[aria-expanded="true"] {
+    color: #FFFFFF;
+    background-color: var(--sidebar-hover-bg);
+}
+
+.nav-link[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
+    color: #FFFFFF;
+}
+
+/* ==========================================================================
+   3. TOP HEADER, BREADCRUMB, MAIN CONTENT & FOOTER
+   ========================================================================== */
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.25s ease;
+}
+
+.top-header {
+    height: var(--header-height);
+    background-color: #FFFFFF;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 1040;
+}
+
+.header-page-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.header-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.header-breadcrumb a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.header-breadcrumb a:hover {
+    color: var(--primary-color);
+}
+
+.header-page-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 2px 0 0 0;
+    line-height: 1.25;
+}
+
+.user-badge {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 4px 12px 4px 6px;
+    border-radius: 999px;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-main);
+}
+
+.user-badge:hover {
+    background: #FFFFFF;
+    border-color: #D1D5DB;
+    color: var(--text-main);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.user-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.user-role {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(17, 24, 39, 0.45);
+    z-index: 1045;
+}
+
+.content-body {
+    padding: 24px;
+    flex: 1 0 auto;
+}
+
+.app-footer {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 14px 24px;
+    background-color: #FFFFFF;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   4. PAGE HEADER, TOPBAR & STEPPER
+   ========================================================================== */
+.wms-shell,
+.wms-shell.wms-theme-emerald,
+.wms-shell.wms-theme-sky,
+.wms-shell.wms-theme-amber,
+.wms-shell.wms-theme-indigo,
+.wms-shell.wms-theme-rose {
+    --wms-accent: #2563EB;
+    --wms-accent-dark: #1D4ED8;
+    --wms-accent-soft: #EFF6FF;
+    --wms-accent-border: #BFDBFE;
+    --wms-slate-900: #1F2937;
+    --wms-slate-700: #374151;
+    --wms-slate-500: #6B7280;
+    --wms-border: #E5E7EB;
+}
+
+.page-header,
+.wms-topbar,
+.page-header-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 18px 24px;
+    box-shadow: var(--shadow-xs);
+    margin-bottom: 20px;
+}
+
+.page-icon,
+.wms-theme-emerald .page-icon,
+.wms-theme-sky .page-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background-color: var(--primary-soft);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    box-shadow: none;
+}
+
+.page-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.15rem;
+}
+
+.page-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+.breadcrumb-modern {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    padding: 0;
+    list-style: none;
+}
+
+.breadcrumb-modern .active {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.wms-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.wms-step-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.wms-step-active {
+    background: var(--primary-color);
+    color: #FFFFFF;
+}
+
+.wms-step-muted {
+    background: var(--border-color);
+    color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   5. LOGIN PAGE LAYOUT
+   ========================================================================== */
+body.login-page {
+    min-height: 100vh;
+    background-color: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 960px;
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.brand-panel {
+    background-color: var(--sidebar-bg);
+    color: #FFFFFF;
+    padding: 44px 40px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.brand-logo-box {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+    background-color: var(--primary-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #FFFFFF;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 12px;
+}
+
+.feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: rgba(37, 99, 235, 0.2);
+    color: #60A5FA;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.form-panel {
+    padding: 44px 40px;
+    background: #FFFFFF;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(5, 150, 105, 0.18);
+    color: #34D399;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+}
+
+.login-help-box {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.login-help-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--primary-soft);
+    color: var(--primary-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.brand-panel-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-panel-title {
+    letter-spacing: -0.2px;
+}
+
+/* ==========================================================================
+   6. PRINT LAYOUT (PhieuNhap, PhieuXuat, LichSuKho)
+   ========================================================================== */
+.phieu-in .sig-space {
+    height: 80px;
+}
+
+.print-only {
+    display: none;
+}
+
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
+@media print {
+    html, body {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        background: #FFFFFF !important;
+    }
+
+    body *:not(.phieu-in):not(.phieu-in *):not(:has(.phieu-in)):not(.print-zone):not(.print-zone *):not(:has(.print-zone)) {
+        display: none !important;
+    }
+
+    .no-print,
+    .sidebar,
+    .top-header,
+    .app-footer {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+    }
+
+    .phieu-in {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0 !important;
+        padding: 14mm 14mm 12mm !important;
+        background: #FFFFFF !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        color: #111827 !important;
+        font-size: 11pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .phieu-in .card-body {
+        padding: 0 !important;
+    }
+
+    .phieu-in .text-primary,
+    .phieu-in .text-success {
+        color: #111827 !important;
+    }
+
+    .phieu-in .bg-light {
+        background: #FFFFFF !important;
+        border: 1px solid #9CA3AF !important;
+        border-radius: 6px !important;
+    }
+
+    .phieu-in .badge,
+    .phieu-in .pay-badge {
+        background: #FFFFFF !important;
+        color: #111827 !important;
+        border: 1px solid #4B5563 !important;
+    }
+
+    .phieu-in .table-responsive {
+        overflow: visible !important;
+    }
+
+    .phieu-in table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 10pt;
+    }
+
+    .phieu-in th,
+    .phieu-in td {
+        border: 1px solid #4B5563 !important;
+        padding: 5px 7px !important;
+        background: transparent !important;
+        color: #111827 !important;
+        vertical-align: middle;
+    }
+
+    .phieu-in th {
+        background: #E5E7EB !important;
+        font-weight: 700;
+        text-transform: none;
+    }
+
+    .phieu-in tr,
+    .phieu-in .row.text-center {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    .phieu-in .col-nowrap {
+        white-space: nowrap;
+    }
+
+    .print-zone {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0 !important;
+        padding: 12mm !important;
+        box-sizing: border-box;
+        box-shadow: none !important;
+        border: 0 !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    .table-custom th {
+        background: #E5E7EB !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .print-zone .pay-badge {
+        border: 1px solid #4B5563;
+        background: #FFFFFF !important;
+        color: #111827 !important;
+    }
+}

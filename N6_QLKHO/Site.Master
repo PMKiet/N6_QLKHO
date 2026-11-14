@@ -4,235 +4,19 @@
 <head runat="server">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%: Page.Title %> - Quản Lý Kho N6</title>
+    <title><%: string.IsNullOrWhiteSpace(Page.Title) ? "Tổng Quan" : Page.Title %> - Quản Lý Kho N6</title>
 
     <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <!-- Bootstrap 5 CSS -->
     <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
-    <!-- FontAwesome 6 Pro/Free -->
+    <!-- FontAwesome 6 Free -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    
-    <style>
-        :root {
-            --sidebar-width: 270px;
-            --bg-body: #f8fafc;
-            --sidebar-bg: #090d16;
-            --sidebar-active-bg: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            --sidebar-hover-bg: #1e293b;
-            --text-muted: #cbd5e1; /* Tăng độ sáng chữ phụ trong sidebar để nhìn rõ hơn */
-            --primary-color: #2563eb;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: #1e293b; /* Chữ chính đậm đà, sắc nét */
-            overflow-x: hidden;
-            margin: 0;
-        }
-
-        /* 1. SIDEBAR MODERN STYLING */
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            background-color: var(--sidebar-bg);
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1050;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar .brand {
-            padding: 22px 20px;
-            background-color: #04070d;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .sidebar-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 12px;
-        }
-
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-
-        .sidebar .menu-title {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 16px 12px 6px 12px;
-            color: #94a3b8; /* Làm tiêu đề menu sáng và nổi bật hơn */
-            font-weight: 700;
-        }
-
-        .sidebar .nav-link {
-            color: var(--text-muted);
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.88rem;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar .nav-link:hover {
-            color: #ffffff;
-            background-color: var(--sidebar-hover-bg);
-            transform: translateX(2px);
-        }
-
-        .sidebar .nav-link.active {
-            color: #ffffff;
-            background: var(--sidebar-active-bg);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            font-weight: 600;
-        }
-
-        .sidebar .nav-link .menu-icon-text {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .sidebar .nav-link i.main-icon {
-            font-size: 1rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        .sidebar .submenu {
-            list-style: none;
-            padding-left: 0;
-            margin-top: 4px;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 8px;
-            padding: 4px 0;
-        }
-
-        .sidebar .submenu .nav-link {
-            padding: 8px 14px 8px 44px;
-            font-size: 0.83rem;
-            color: #cbd5e1; /* Chữ trong submenu sáng rõ */
-            background-color: transparent;
-            margin-bottom: 0;
-        }
-
-        .sidebar .submenu .nav-link:hover {
-            color: #ffffff;
-            background-color: rgba(255, 255, 255, 0.08);
-            transform: none;
-        }
-
-        .sidebar .submenu .nav-link.active {
-            background: transparent;
-            color: #60a5fa;
-            font-weight: 600;
-            box-shadow: none;
-        }
-
-        .nav-link .fa-chevron-down {
-            transition: transform 0.3s ease;
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
-
-        .nav-link[aria-expanded="true"] .fa-chevron-down {
-            transform: rotate(180deg);
-            color: #ffffff;
-        }
-
-        /* 2. MAIN CONTENT AREA */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
-        }
-
-        .top-header {
-            height: 70px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 32px;
-            position: sticky;
-            top: 0;
-            z-index: 1040;
-        }
-
-        .user-badge {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 6px 14px;
-            border-radius: 50px;
-            transition: all 0.2s ease;
-        }
-
-        .user-badge:hover {
-            background: #ffffff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            border-color: #cbd5e1;
-        }
-
-        /* Overlay cho mobile khi mở menu */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(2px);
-            z-index: 1045;
-        }
-
-        @media (max-width: 992px) {
-            .sidebar { 
-                transform: translateX(calc(-1 * var(--sidebar-width)));
-            }
-            .sidebar.show { 
-                transform: translateX(0);
-            }
-            .sidebar-overlay.show {
-                display: block;
-            }
-            .main-content { 
-                margin-left: 0; 
-            }
-        }
-
-        /* Hiệu ứng Fade-in nội dung */
-        .content-body {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+    <!-- Design System & Global Stylesheets (Minimalist Admin Theme) -->
+    <link href="~/assets/css/main.css" rel="stylesheet" />
+    <link href="~/assets/css/components.css" rel="stylesheet" />
+    <link href="~/assets/css/responsive.css" rel="stylesheet" />
+    <link href="~/Content/site.css" rel="stylesheet" />
 
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
@@ -246,40 +30,39 @@
         <!-- 1. SIDEBAR -->
         <aside class="sidebar" id="sidebarNav">
             <div class="brand">
-                <div class="d-flex align-items-center justify-content-center rounded-3 text-white shadow-sm" 
-                     style="width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); flex-shrink: 0;">
+                <div class="brand-logo-icon">
                     <i class="fa-solid fa-boxes-stacked fs-5"></i>
                 </div>
                 <div class="overflow-hidden">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold text-white" style="font-size: 0.95rem; letter-spacing: 0.5px;">QL KHO N6</span>
-                        <span class="badge bg-primary text-white" style="font-size: 0.55rem; padding: 2px 5px;">PRO</span>
+                        <span class="brand-title">QL KHO N6</span>
+                        <span class="brand-pro-badge">PRO</span>
                     </div>
-                    <small class="d-block text-truncate" style="color: #94a3b8; font-size: 0.73rem;">Hệ Thống Quản Lý Kho</small>
+                    <small class="brand-subtitle text-truncate">Hệ Thống Quản Lý Kho</small>
                 </div>
             </div>
 
             <!-- Sidebar Menu -->
             <div class="sidebar-scroll">
-                
+
                 <div class="menu-title">Tổng Quan</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link" href="~/Dashboard.aspx" runat="server">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-chart-pie main-icon text-primary"></i>
+                                <i class="fa-solid fa-chart-pie main-icon"></i>
                                 <span>Dashboard</span>
                             </span>
                         </a>
                     </li>
                 </ul>
 
-                <div class="menu-title">Danh Mục & Tồn Kho</div>
+                <div class="menu-title">Danh Mục &amp; Tồn Kho</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link" data-bs-toggle="collapse" href="#danhmucSubmenu" role="button" aria-expanded="false" aria-controls="danhmucSubmenu">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-boxes-packing main-icon text-info"></i>
+                                <i class="fa-solid fa-boxes-packing main-icon"></i>
                                 <span>Danh Mục Cơ Bản</span>
                             </span>
                             <i class="fa-solid fa-chevron-down"></i>
@@ -307,7 +90,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="~/TonKho.aspx" runat="server">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-warehouse main-icon text-warning"></i>
+                                <i class="fa-solid fa-warehouse main-icon"></i>
                                 <span>Quản Lý Tồn Kho (Lô)</span>
                             </span>
                         </a>
@@ -319,8 +102,8 @@
                     <li class="nav-item">
                         <a class="nav-link" data-bs-toggle="collapse" href="#khoSubmenu" role="button" aria-expanded="false" aria-controls="khoSubmenu">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-right-left main-icon text-success"></i>
-                                <span>Nhập & Xuất Kho</span>
+                                <i class="fa-solid fa-right-left main-icon"></i>
+                                <span>Nhập &amp; Xuất Kho</span>
                             </span>
                             <i class="fa-solid fa-chevron-down"></i>
                         </a>
@@ -328,42 +111,41 @@
                             <ul class="submenu flex-column">
                                 <li class="nav-item">
                                     <a class="nav-link" href="~/PhieuNhap.aspx" runat="server">
-                                        <i class="fa-solid fa-file-arrow-down me-2 text-success opacity-75"></i> Lập Phiếu Nhập
+                                        <i class="fa-solid fa-file-arrow-down me-2 opacity-75"></i> Lập Phiếu Nhập
                                     </a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="~/PhieuXuat.aspx" runat="server">
-                                        <i class="fa-solid fa-file-arrow-up me-2 text-primary opacity-75"></i> Lập Phiếu Xuất
+                                        <i class="fa-solid fa-file-arrow-up me-2 opacity-75"></i> Lập Phiếu Xuất
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </li>
-                    <!-- Mục Lịch Sử Kho gộp chung -->
                     <li class="nav-item">
                         <a class="nav-link" href="~/LichSuKho.aspx" runat="server">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-clock-rotate-left main-icon text-info"></i>
-                                <span>Lịch Sử Nhập & Xuất Kho</span>
+                                <i class="fa-solid fa-clock-rotate-left main-icon"></i>
+                                <span>Lịch Sử Nhập &amp; Xuất Kho</span>
                             </span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="~/DonDatHang.aspx" runat="server">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-cart-shopping main-icon" style="color: #818cf8;"></i>
+                                <i class="fa-solid fa-cart-shopping main-icon"></i>
                                 <span>Đơn Đặt Hàng</span>
                             </span>
                         </a>
                     </li>
                 </ul>
 
-                <div class="menu-title">Hệ Thống & Admin</div>
+                <div class="menu-title">Hệ Thống &amp; Admin</div>
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link" data-bs-toggle="collapse" href="#adminSubmenu" role="button" aria-expanded="false" aria-controls="adminSubmenu">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-user-shield main-icon text-danger"></i>
+                                <i class="fa-solid fa-user-shield main-icon"></i>
                                 <span>Quản Trị Hệ Thống</span>
                             </span>
                             <i class="fa-solid fa-chevron-down"></i>
@@ -384,9 +166,9 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning fw-semibold" href="~/CanhBao.aspx" runat="server">
+                        <a class="nav-link" href="~/CanhBao.aspx" runat="server">
                             <span class="menu-icon-text">
-                                <i class="fa-solid fa-triangle-exclamation main-icon text-warning"></i>
+                                <i class="fa-solid fa-triangle-exclamation main-icon"></i>
                                 <span>Cảnh Báo Hạn Dụng</span>
                             </span>
                         </a>
@@ -397,40 +179,53 @@
 
         <!-- 2. MAIN CONTENT AREA -->
         <main class="main-content">
-            
+
             <header class="top-header">
                 <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-sm btn-light border-0 d-lg-none p-2" type="button" onclick="toggleSidebar()">
+                    <button class="btn btn-sm btn-light border d-lg-none p-2" type="button" onclick="toggleSidebar()" aria-label="Mở menu">
                         <i class="fa-solid fa-bars fs-5"></i>
                     </button>
-                    <div class="d-flex align-items-center text-secondary small fw-medium">
-                        <i class="fa-regular fa-clock me-2 text-primary"></i> 
-                        <span>Hệ Thống Quản Lý Kho Hàng N6</span>
+                    <div class="header-page-info">
+                        <nav class="header-breadcrumb" aria-label="breadcrumb">
+                            <a href="~/Dashboard.aspx" runat="server"><i class="fa-solid fa-house me-1"></i>Trang chủ</a>
+                            <i class="fa-solid fa-chevron-right small opacity-50"></i>
+                            <span class="text-primary fw-semibold"><%: string.IsNullOrWhiteSpace(Page.Title) ? "Tổng quan" : Page.Title %></span>
+                        </nav>
+                        <div class="header-page-title"><%: string.IsNullOrWhiteSpace(Page.Title) ? "Bảng Điều Khiển Tổng Quan" : Page.Title %></div>
                     </div>
                 </div>
-                
+
                 <div class="d-flex align-items-center gap-3">
                     <div class="dropdown">
-                        <a href="#" class="user-badge d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="https://ui-avatars.com/api/?name=Admin+N6&background=2563eb&color=fff" alt="Avatar" width="32" height="32" class="rounded-circle me-2 shadow-sm">
-                            <span class="fw-semibold small pe-1">Quản Trị Viên</span>
+                        <a href="#" class="user-badge dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="user-avatar">
+                                <i class="fa-solid fa-user-check"></i>
+                            </span>
+                            <span class="user-meta">
+                                <span class="user-name"><%: Session["HoTen"] ?? "Quản Trị Viên" %></span>
+                                <span class="user-role"><%: Session["ChucVu"] ?? "Quản lý kho" %></span>
+                            </span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2 py-2 rounded-3" aria-labelledby="dropdownUser1">
-                            <li><a class="dropdown-item py-2 px-3 small" href="#"><i class="fa-regular fa-id-badge me-2 text-primary"></i> Thông tin tài khoản</a></li>
+                            <li class="px-3 py-2 border-bottom d-sm-none">
+                                <div class="fw-bold small text-dark"><%: Session["HoTen"] ?? "Quản Trị Viên" %></div>
+                                <div class="text-muted small"><%: Session["ChucVu"] ?? "Quản lý kho" %></div>
+                            </li>
+                            <li><a class="dropdown-item py-2 px-3 small" href="~/QuanLyTaiKhoan.aspx" runat="server"><i class="fa-regular fa-id-badge me-2 text-primary"></i> Thông tin tài khoản</a></li>
                             <li><a class="dropdown-item py-2 px-3 small" href="~/CaiDatHeThong.aspx" runat="server"><i class="fa-solid fa-gear me-2 text-secondary"></i> Cài đặt hệ thống</a></li>
-                            <li><hr class="dropdown-divider my-1"></li>
-                            <li><a class="dropdown-item py-2 px-3 small text-danger" href="~/Login.aspx" runat="server"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
+                            <li><hr class="dropdown-divider my-1" /></li>
+                            <li><a class="dropdown-item py-2 px-3 small text-danger fw-semibold" href="~/Login.aspx" runat="server"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                         </ul>
                     </div>
                 </div>
             </header>
 
-            <div class="p-4 flex-grow-1 content-body">
+            <div class="content-body">
                 <asp:ContentPlaceHolder ID="MainContent" runat="server">
                 </asp:ContentPlaceHolder>
             </div>
 
-            <footer class="text-center text-secondary py-3 bg-white border-top small">
+            <footer class="app-footer">
                 © <%: DateTime.Now.Year %> <strong>N6_QLKHO</strong> - Hệ Thống Quản Lý Kho Hàng Chuyên Nghiệp.
             </footer>
         </main>
@@ -445,20 +240,24 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            const currentPath = window.location.pathname.toLowerCase();
-            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            let currentPath = window.location.pathname.toLowerCase();
+            if (currentPath === '/' || currentPath.endsWith('/default.aspx')) {
+                currentPath = '/dashboard.aspx';
+            }
 
-            navLinks.forEach(link => {
+            const currentFile = currentPath.split('/').pop() || 'dashboard.aspx';
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(function (link) {
                 const href = link.getAttribute('href');
-                if (href && href !== '#') {
-                    const cleanHref = href.replace('~/', '/').toLowerCase();
-                    if (currentPath.endsWith(cleanHref) || currentPath.includes(cleanHref)) {
+                if (href && href !== '#' && !href.startsWith('#')) {
+                    const linkFile = href.split('?')[0].replace(/^~\//, '').split('/').pop().toLowerCase();
+                    if (currentFile === linkFile) {
                         link.classList.add('active');
 
                         const parentCollapse = link.closest('.collapse');
                         if (parentCollapse) {
                             parentCollapse.classList.add('show');
-                            const toggleBtn = document.querySelector(`[href="#${parentCollapse.id}"]`);
+                            const toggleBtn = document.querySelector('[href="#' + parentCollapse.id + '"]');
                             if (toggleBtn) {
                                 toggleBtn.setAttribute('aria-expanded', 'true');
                             }
