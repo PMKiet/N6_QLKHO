@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿<%@ Page Title="Lịch Sử Giao Dịch Kho" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="LichSuKho.aspx.cs" Inherits="N6_QLKHO.LichSuKho" %>
+=======
+<%@ Page Title="Lịch Sử Giao Dịch Kho" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="LichSuKho.aspx.cs" Inherits="N6_QLKHO.LichSuKho" %>
+>>>>>>> 2f494f6126390a3afe0f0cdd07a1230de99fe24d
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>

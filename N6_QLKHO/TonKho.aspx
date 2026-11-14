@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿<%@ Page Title="Quản Lý Tồn Kho Theo Lô" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="TonKho.aspx.cs" Inherits="N6_QLKHO.TonKho" %>
+=======
+<%@ Page Title="Quản Lý Tồn Kho Theo Lô" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="TonKho.aspx.cs" Inherits="N6_QLKHO.TonKho" %>
+>>>>>>> 2f494f6126390a3afe0f0cdd07a1230de99fe24d
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>

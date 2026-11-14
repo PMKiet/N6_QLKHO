@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿<%@ Page Title="Quản Lý Đơn Đặt Hàng" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="DonDatHang.aspx.cs" Inherits="N6_QLKHO.DonDatHang" %>
+=======
+<%@ Page Title="Quản Lý Đơn Đặt Hàng" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="DonDatHang.aspx.cs" Inherits="N6_QLKHO.DonDatHang" %>
+>>>>>>> 2f494f6126390a3afe0f0cdd07a1230de99fe24d
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">

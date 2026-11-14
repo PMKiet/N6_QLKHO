@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="Login.aspx.cs" Inherits="N6_QLKHO.Login" %>
+=======
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="Login.aspx.cs" Inherits="N6_QLKHO.Login" %>
+>>>>>>> 2f494f6126390a3afe0f0cdd07a1230de99fe24d
 
 <!DOCTYPE html>
 <html lang="vi">

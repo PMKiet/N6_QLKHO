@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Quản Lý Hàng Hóa" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="HangHoa.aspx.cs" Inherits="N6_QLKHO.HangHoa" %>
+<%@ Page Title="Quản Lý Hàng Hóa" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="HangHoa.aspx.cs" Inherits="N6_QLKHO.HangHoa" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>

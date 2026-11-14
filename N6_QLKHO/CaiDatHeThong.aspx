@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿<%@ Page Title="Cài Đặt Hệ Thống" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="CaiDatHeThong.aspx.cs" Inherits="N6_QLKHO.CaiDatHeThong" %>
+=======
+<%@ Page Title="Cài Đặt Hệ Thống" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="CaiDatHeThong.aspx.cs" Inherits="N6_QLKHO.CaiDatHeThong" %>
+>>>>>>> 2f494f6126390a3afe0f0cdd07a1230de99fe24d
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
