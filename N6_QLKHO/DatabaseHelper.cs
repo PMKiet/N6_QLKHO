@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Web;
 using System.Text;
 using System.Data;
@@ -11,7 +11,7 @@ namespace N6_QLKHO
     {
         // Lấy chuỗi kết nối từ Web.config (hoặc chuỗi mặc định nếu chưa cấu hình Web.config)
         private static string connectionString = ConfigurationManager.ConnectionStrings["MyDbConnection"]?.ConnectionString
-            ?? "Data Source=DESKTOP-UKT66TU;Initial Catalog=N6_QLKHOVATTU;Integrated Security=True;Encrypt=False";
+            ?? "Data Source=.\\SQLEXPRESS;Initial Catalog=N6_QLKHOVATTU;Integrated Security=True;Encrypt=False";
 
         /// <summary>
         /// Thực thi câu lệnh SELECT và trả về DataTable (Dùng để nạp dữ liệu lên GridView, DropDownList...)
@@ -177,7 +177,7 @@ namespace N6_QLKHO
     {
         public NghiepVuException(string message) : base(message) { }
     }
-<<<<<<< HEAD
+
 
     /// <summary>
     /// Hỗ trợ xuất bản xem trước phiếu ra file Excel (.xls) / Word (.doc).
@@ -271,6 +271,4 @@ namespace N6_QLKHO
         }
     }
 }
-=======
-}
->>>>>>> 268bbab61dd854f70290bde2a3fde42dcc1f3c71
+
