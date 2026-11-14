@@ -50,7 +50,7 @@ namespace N6_QLKHO
         private void LoadDropdownData()
         {
             ddlDonHang.DataSource = DatabaseHelper.ExecuteQuery(
-                "SELECT d.MaDonHang, d.MaDonHang + N' - ' + d.TenKhachHang AS TenHienThi " +
+                "SELECT RTRIM(LTRIM(d.MaDonHang)) AS MaDonHang, RTRIM(LTRIM(d.MaDonHang)) + N' - ' + d.TenKhachHang AS TenHienThi " +
                 "FROM DonDatHang d " +
                 "WHERE NOT EXISTS (SELECT 1 FROM PhieuXuat p WHERE p.MaDonHang = d.MaDonHang) " +
                 "ORDER BY d.NgayDatHang DESC");
@@ -60,8 +60,8 @@ namespace N6_QLKHO
             ddlDonHang.Items.Insert(0, new ListItem("-- Xuất trực tiếp (không theo đơn) --", ""));
 
             ddlHangHoa.DataSource = DatabaseHelper.ExecuteQuery(
-                "SELECT h.MaHangHoa, " +
-                "h.MaHangHoa + N' - ' + h.TenHangHoa + N'  (Tồn: ' + " +
+                "SELECT RTRIM(LTRIM(h.MaHangHoa)) AS MaHangHoa, " +
+                "RTRIM(LTRIM(h.MaHangHoa)) + N' - ' + h.TenHangHoa + N'  (Tồn: ' + " +
                 "CAST(ISNULL((SELECT SUM(t.SoLuongTon) FROM TonKho t WHERE t.MaHangHoa = h.MaHangHoa AND t.HanSuDung >= CAST(GETDATE() AS date)), 0) AS nvarchar(20)) " +
                 "+ N' ' + h.DonViTinh + N')' AS TenHienThi " +
                 "FROM HangHoa h ORDER BY h.MaHangHoa");
@@ -90,11 +90,11 @@ namespace N6_QLKHO
         {
             try
             {
-                DataTable dt = DatabaseHelper.ExecuteQuery("SELECT MaHangHoa, DonGia FROM HangHoa");
+                DataTable dt = DatabaseHelper.ExecuteQuery("SELECT RTRIM(LTRIM(MaHangHoa)) AS MaHangHoa, DonGia FROM HangHoa");
                 StringBuilder sb = new StringBuilder("var giaMacDinh = {");
                 foreach (DataRow r in dt.Rows)
                 {
-                    string ma = Convert.ToString(r["MaHangHoa"]).Replace("\\", "").Replace("'", "");
+                    string ma = Convert.ToString(r["MaHangHoa"]).Trim().Replace("\\", "").Replace("'", "");
                     decimal gia = Convert.ToDecimal(r["DonGia"]);
                     sb.Append("'").Append(ma).Append("':")
                       .Append(Math.Round(gia, 0).ToString("0", CultureInfo.InvariantCulture))
@@ -164,7 +164,7 @@ namespace N6_QLKHO
                     "<div class='text-secondary small fw-semibold'><i class='fa-solid fa-layer-group me-1 text-primary'></i>Tổng hợp bảng kê: <strong>" + dt.Rows.Count + "</strong> mặt hàng &bull; <strong>" + tongSL.ToString("N0") + "</strong> sản phẩm</div>" +
                     "<div class='d-flex align-items-center gap-2'>" +
                     "<span class='text-secondary fw-semibold'>Tổng tiền tạm tính:</span>" +
-                    "<span class='fs-5 fw-bold text-primary'>" + tongTien.ToString("N0") + " VND</span>" +
+                    "<span class='fs-5 fw-bold text-primary tabular-nums'>" + tongTien.ToString("N0") + " VND</span>" +
                     "</div></div>";
             }
         }
